@@ -125,7 +125,7 @@ Este é o número mais importante do app. Qualquer mudança nessa regra exige te
 ## Roadmap
 
 1. [x] Modelo de dados e camada `domain` com testes (Room já sobre SQLCipher)
-2. [ ] Cadastro rápido de lançamento (meta: 2–3 toques) e lista do mês
+2. [x] Cadastro rápido de lançamento (meta: 2–3 toques) e lista do mês
 3. [ ] Recorrências e parcelas
 4. [ ] Cartão de crédito e faturas
 5. [ ] Tela "quanto ainda posso gastar"

@@ -8,7 +8,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
 import io.github.igornunes.yourfinances.data.db.entity.toDomain
 import io.github.igornunes.yourfinances.data.db.entity.toEntity
-import io.github.igornunes.yourfinances.data.repository.EntryRepository
+import io.github.igornunes.yourfinances.data.repository.RoomEntryRepository
 import io.github.igornunes.yourfinances.domain.installment.monthlyPaymentDates
 import io.github.igornunes.yourfinances.domain.model.Category
 import io.github.igornunes.yourfinances.domain.model.CreditCard
@@ -32,13 +32,13 @@ import java.time.YearMonth
 @RunWith(AndroidJUnit4::class)
 class EntryDaoTest {
     private lateinit var database: AppDatabase
-    private lateinit var repository: EntryRepository
+    private lateinit var repository: RoomEntryRepository
 
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).build()
-        repository = EntryRepository(database)
+        repository = RoomEntryRepository(database)
     }
 
     @After

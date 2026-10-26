@@ -2,6 +2,7 @@ package io.github.igornunes.yourfinances
 
 import android.app.Application
 import io.github.igornunes.yourfinances.di.dataModule
+import io.github.igornunes.yourfinances.di.uiModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 
@@ -10,7 +11,7 @@ class YourFinancesApp : Application() {
         super.onCreate()
         startKoin {
             androidContext(this@YourFinancesApp)
-            modules(dataModule)
+            modules(dataModule, uiModule)
         }
     }
 }
