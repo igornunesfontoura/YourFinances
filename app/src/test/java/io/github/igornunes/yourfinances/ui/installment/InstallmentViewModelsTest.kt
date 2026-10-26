@@ -1,8 +1,10 @@
 package io.github.igornunes.yourfinances.ui.installment
 
 import io.github.igornunes.yourfinances.domain.installment.monthlyPaymentDates
+import io.github.igornunes.yourfinances.domain.model.CreditCard
 import io.github.igornunes.yourfinances.domain.model.EntryType
 import io.github.igornunes.yourfinances.domain.model.InstallmentPurchase
+import io.github.igornunes.yourfinances.testing.FakeCreditCardRepository
 import io.github.igornunes.yourfinances.testing.FakeInstallmentRepository
 import io.github.igornunes.yourfinances.testing.MainDispatcherExtension
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -29,10 +31,11 @@ class InstallmentViewModelsTest {
     private val today = LocalDate.of(2026, 3, 15)
     private val clock = Clock.fixed(today.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
     private val repository = FakeInstallmentRepository()
+    private val cards = FakeCreditCardRepository(listOf(CreditCard(id = 1, name = "Nubank", closingDay = 10, dueDay = 20)))
 
     @Test
     fun `form previews the split and saves monthly installments`() = runTest {
-        val viewModel = InstallmentFormViewModel(repository, clock)
+        val viewModel = InstallmentFormViewModel(repository, cards, clock)
         assertEquals(LocalDate.of(2026, 4, 15), viewModel.state.value.firstPaymentOn)
 
         viewModel.onTotalChange("100000")
@@ -52,8 +55,27 @@ class InstallmentViewModelsTest {
     }
 
     @Test
+    fun `card purchase uses the due dates of consecutive invoices`() = runTest {
+        val viewModel = InstallmentFormViewModel(repository, cards, clock)
+        viewModel.onTotalChange("30000")
+        viewModel.onCountChange("3")
+        viewModel.onCardChange(1)
+        // Today (15th) is after the closing day (10th): first invoice due April 20.
+        assertEquals(
+            listOf(LocalDate.of(2026, 4, 20), LocalDate.of(2026, 5, 20), LocalDate.of(2026, 6, 20)),
+            viewModel.state.value.paymentDates,
+        )
+        viewModel.save()
+
+        val plan = repository.plans.value.single()
+        assertEquals(1L, plan.purchase.creditCardId)
+        assertEquals(viewModel.state.value.paymentDates, plan.installments.map { it.paidOn })
+        assertTrue(plan.installments.all { it.creditCardId == 1L })
+    }
+
+    @Test
     fun `first payment follows the purchase date until edited`() {
-        val viewModel = InstallmentFormViewModel(repository, clock)
+        val viewModel = InstallmentFormViewModel(repository, cards, clock)
         viewModel.onPurchaseDateChange(LocalDate.of(2026, 1, 31))
         assertEquals(LocalDate.of(2026, 2, 28), viewModel.state.value.firstPaymentOn)
 
@@ -67,7 +89,7 @@ class InstallmentViewModelsTest {
 
     @Test
     fun `count must be between 2 and the maximum`() {
-        val viewModel = InstallmentFormViewModel(repository, clock)
+        val viewModel = InstallmentFormViewModel(repository, cards, clock)
         viewModel.onTotalChange("1000")
         listOf("1", "0", "121", "").forEach { count ->
             viewModel.onCountChange(count)

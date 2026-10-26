@@ -38,7 +38,9 @@ import io.github.igornunes.yourfinances.ui.components.DateChip
 import io.github.igornunes.yourfinances.ui.components.ErrorText
 import io.github.igornunes.yourfinances.ui.components.FormScaffold
 import io.github.igornunes.yourfinances.ui.components.HintText
+import io.github.igornunes.yourfinances.ui.components.PaymentSelector
 import io.github.igornunes.yourfinances.ui.components.SegmentedSelector
+import io.github.igornunes.yourfinances.ui.format.formatShortDate
 import io.github.igornunes.yourfinances.ui.format.label
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -60,6 +62,7 @@ fun EntryFormRoute(
         onDescriptionChange = viewModel::onDescriptionChange,
         onDateChange = viewModel::onDateChange,
         onApplyToUpcomingChange = viewModel::onApplyToUpcomingChange,
+        onCardChange = viewModel::onCardChange,
         onSave = viewModel::save,
         onDelete = viewModel::delete,
         onBack = onDone,
@@ -74,6 +77,7 @@ fun EntryFormScreen(
     onDescriptionChange: (String) -> Unit,
     onDateChange: (LocalDate) -> Unit,
     onApplyToUpcomingChange: (Boolean) -> Unit,
+    onCardChange: (Long?) -> Unit,
     onSave: () -> Unit,
     onDelete: () -> Unit,
     onBack: () -> Unit,
@@ -123,6 +127,11 @@ fun EntryFormScreen(
             onDateChange = onDateChange,
         )
 
+        if (state.showsPayment) {
+            PaymentSelector(state.cards, state.cardId, onCardChange, enabled = valuesEnabled)
+            state.cardDueDate?.let { HintText(stringResource(R.string.payment_card_due, formatShortDate(it))) }
+        }
+
         OutlinedTextField(
             value = state.description,
             onValueChange = onDescriptionChange,
@@ -134,7 +143,7 @@ fun EntryFormScreen(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        if (state.isRecurring) {
+        if (state.canApplyToUpcoming) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.entry_apply_to_upcoming))

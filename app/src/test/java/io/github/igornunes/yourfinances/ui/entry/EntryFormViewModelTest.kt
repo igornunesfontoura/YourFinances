@@ -1,12 +1,14 @@
 package io.github.igornunes.yourfinances.ui.entry
 
 import app.cash.turbine.test
+import io.github.igornunes.yourfinances.domain.model.CreditCard
 import io.github.igornunes.yourfinances.domain.model.Entry
 import io.github.igornunes.yourfinances.domain.model.EntryStatus
 import io.github.igornunes.yourfinances.domain.model.EntryType
 import io.github.igornunes.yourfinances.domain.installment.monthlyPaymentDates
 import io.github.igornunes.yourfinances.domain.model.InstallmentPurchase
 import io.github.igornunes.yourfinances.domain.recurrence.predictionWindow
+import io.github.igornunes.yourfinances.testing.FakeCreditCardRepository
 import io.github.igornunes.yourfinances.testing.FakeEntryRepository
 import io.github.igornunes.yourfinances.testing.FakeInstallmentRepository
 import io.github.igornunes.yourfinances.testing.FakeRecurrenceRepository
@@ -14,6 +16,7 @@ import io.github.igornunes.yourfinances.testing.MainDispatcherExtension
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -28,6 +31,7 @@ class EntryFormViewModelTest {
 
     private val recurrences = FakeRecurrenceRepository()
     private val installments = FakeInstallmentRepository()
+    private val cards = FakeCreditCardRepository(listOf(CreditCard(id = 1, name = "Nubank", closingDay = 10, dueDay = 20)))
 
     private val today = LocalDate.of(2026, 3, 15)
     private val clock = Clock.fixed(today.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
@@ -35,7 +39,7 @@ class EntryFormViewModelTest {
     @Test
     fun `quick add saves a confirmed flexible expense for today`() = runTest {
         val repository = FakeEntryRepository()
-        val viewModel = EntryFormViewModel(null, repository, recurrences, installments, clock)
+        val viewModel = EntryFormViewModel(null, repository, recurrences, installments, cards, clock)
 
         assertFalse(viewModel.state.value.canSave)
         viewModel.onAmountChange("4590")
@@ -54,7 +58,7 @@ class EntryFormViewModelTest {
     @Test
     fun `zero amount cannot be saved`() = runTest {
         val repository = FakeEntryRepository()
-        val viewModel = EntryFormViewModel(null, repository, recurrences, installments, clock)
+        val viewModel = EntryFormViewModel(null, repository, recurrences, installments, cards, clock)
         viewModel.onAmountChange("000")
         viewModel.save()
         assertTrue(repository.entries.value.isEmpty())
@@ -64,7 +68,7 @@ class EntryFormViewModelTest {
     @Test
     fun `type, date and description are applied`() = runTest {
         val repository = FakeEntryRepository()
-        val viewModel = EntryFormViewModel(null, repository, recurrences, installments, clock)
+        val viewModel = EntryFormViewModel(null, repository, recurrences, installments, cards, clock)
         viewModel.onAmountChange("500000")
         viewModel.onTypeChange(EntryType.INCOME)
         viewModel.onDateChange(LocalDate.of(2026, 3, 5))
@@ -88,7 +92,7 @@ class EntryFormViewModelTest {
             paidOn = LocalDate.of(2026, 3, 10),
         )
         val repository = FakeEntryRepository(listOf(existing))
-        val viewModel = EntryFormViewModel(7, repository, recurrences, installments, clock)
+        val viewModel = EntryFormViewModel(7, repository, recurrences, installments, cards, clock)
 
         viewModel.state.test {
             val loaded = awaitItem()
@@ -120,7 +124,7 @@ class EntryFormViewModelTest {
             paidOn = today,
         )
         val repository = FakeEntryRepository(listOf(existing))
-        val viewModel = EntryFormViewModel(7, repository, recurrences, installments, clock)
+        val viewModel = EntryFormViewModel(7, repository, recurrences, installments, cards, clock)
         viewModel.delete()
         assertTrue(repository.entries.value.isEmpty())
         assertTrue(viewModel.state.value.status.finished)
@@ -128,14 +132,14 @@ class EntryFormViewModelTest {
 
     @Test
     fun `missing entry closes the form`() = runTest {
-        val viewModel = EntryFormViewModel(99, FakeEntryRepository(), recurrences, installments, clock)
+        val viewModel = EntryFormViewModel(99, FakeEntryRepository(), recurrences, installments, cards, clock)
         assertTrue(viewModel.state.value.status.finished)
     }
 
     @Test
     fun `saving twice creates a single entry`() = runTest {
         val repository = FakeEntryRepository()
-        val viewModel = EntryFormViewModel(null, repository, recurrences, installments, clock)
+        val viewModel = EntryFormViewModel(null, repository, recurrences, installments, cards, clock)
         viewModel.onAmountChange("1500")
         viewModel.save()
         viewModel.save()
@@ -146,7 +150,7 @@ class EntryFormViewModelTest {
     @Test
     fun `failed save keeps the form open and allows retrying`() = runTest {
         val repository = FakeEntryRepository().apply { failWrites = true }
-        val viewModel = EntryFormViewModel(null, repository, recurrences, installments, clock)
+        val viewModel = EntryFormViewModel(null, repository, recurrences, installments, cards, clock)
         viewModel.onAmountChange("1500")
         viewModel.save()
         assertTrue(viewModel.state.value.status.failed)
@@ -165,7 +169,7 @@ class EntryFormViewModelTest {
         installments.add(purchase, monthlyPaymentDates(today, 3))
         val installment = installments.plans.value.single().installments[1].copy(id = 7)
         val repository = FakeEntryRepository(listOf(installment))
-        val viewModel = EntryFormViewModel(7, repository, recurrences, installments, clock)
+        val viewModel = EntryFormViewModel(7, repository, recurrences, installments, cards, clock)
         assertFalse(viewModel.state.value.canEditValues)
         assertTrue(viewModel.state.value.deletesWholePurchase)
 
@@ -174,7 +178,7 @@ class EntryFormViewModelTest {
         viewModel.save()
         assertEquals(installment.copy(description = "TV da sala"), repository.entries.value.single())
 
-        val reopened = EntryFormViewModel(7, repository, recurrences, installments, clock)
+        val reopened = EntryFormViewModel(7, repository, recurrences, installments, cards, clock)
         reopened.delete()
         assertTrue(installments.plans.value.isEmpty())
     }
@@ -194,7 +198,7 @@ class EntryFormViewModelTest {
     @Test
     fun `adjusting a predicted entry confirms only that occurrence by default`() = runTest {
         val repository = FakeEntryRepository(listOf(predicted))
-        val viewModel = EntryFormViewModel(9, repository, recurrences, installments, clock)
+        val viewModel = EntryFormViewModel(9, repository, recurrences, installments, cards, clock)
         assertTrue(viewModel.state.value.isRecurring)
 
         viewModel.onAmountChange("17890")
@@ -209,7 +213,7 @@ class EntryFormViewModelTest {
     @Test
     fun `apply to upcoming hands the edited occurrence to the recurrence`() = runTest {
         val repository = FakeEntryRepository(listOf(predicted))
-        val viewModel = EntryFormViewModel(9, repository, recurrences, installments, clock)
+        val viewModel = EntryFormViewModel(9, repository, recurrences, installments, cards, clock)
         viewModel.onAmountChange("17890")
         viewModel.onApplyToUpcomingChange(true)
         viewModel.save()
@@ -219,5 +223,55 @@ class EntryFormViewModelTest {
         assertEquals(EntryStatus.CONFIRMED, applied.status)
         assertEquals(predictionWindow(today), recurrences.windows.single())
         assertTrue(viewModel.state.value.status.finished)
+    }
+
+    @Test
+    fun `card purchase goes to the invoice of its date`() = runTest {
+        val repository = FakeEntryRepository()
+        val viewModel = EntryFormViewModel(null, repository, recurrences, installments, cards, clock)
+        assertTrue(viewModel.state.value.showsPayment)
+        viewModel.onAmountChange("8000")
+        viewModel.onCardChange(1)
+        // Today (15th) is after the closing day (10th): the April invoice.
+        assertEquals(LocalDate.of(2026, 4, 20), viewModel.state.value.cardDueDate)
+        viewModel.save()
+
+        val saved = repository.entries.value.single()
+        assertEquals(1L, saved.creditCardId)
+        assertEquals(today, saved.occurredOn)
+        assertEquals(LocalDate.of(2026, 4, 20), saved.paidOn)
+    }
+
+    @Test
+    fun `income cannot be paid with a card`() {
+        val viewModel = EntryFormViewModel(null, FakeEntryRepository(), recurrences, installments, cards, clock)
+        viewModel.onCardChange(1)
+        viewModel.onTypeChange(EntryType.INCOME)
+        assertNull(viewModel.state.value.cardId)
+        assertFalse(viewModel.state.value.showsPayment)
+    }
+
+    @Test
+    fun `apply to upcoming is not offered for an occurrence put on a card`() = runTest {
+        val viewModel = EntryFormViewModel(9, FakeEntryRepository(listOf(predicted)), recurrences, installments, cards, clock)
+        assertTrue(viewModel.state.value.canApplyToUpcoming)
+        viewModel.onApplyToUpcomingChange(true)
+        viewModel.onCardChange(1)
+        assertFalse(viewModel.state.value.canApplyToUpcoming)
+        viewModel.save()
+        assertTrue(recurrences.appliedEntries.isEmpty())
+        assertTrue(viewModel.state.value.status.finished)
+    }
+
+    @Test
+    fun `cannot save a card entry before its card is known`() = runTest {
+        val onUnknownCard = predicted.copy(
+            status = EntryStatus.CONFIRMED,
+            recurrenceId = null,
+            scheduledFor = null,
+            creditCardId = 42,
+        )
+        val viewModel = EntryFormViewModel(9, FakeEntryRepository(listOf(onUnknownCard)), recurrences, installments, cards, clock)
+        assertFalse(viewModel.state.value.canSave)
     }
 }

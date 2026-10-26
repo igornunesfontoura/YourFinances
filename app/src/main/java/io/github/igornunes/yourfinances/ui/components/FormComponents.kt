@@ -4,11 +4,13 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -22,6 +24,7 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,6 +49,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.igornunes.yourfinances.R
+import io.github.igornunes.yourfinances.domain.model.CreditCard
 import io.github.igornunes.yourfinances.ui.format.AmountVisualTransformation
 import io.github.igornunes.yourfinances.ui.format.formatShortDate
 import java.time.Instant
@@ -256,4 +260,33 @@ fun ErrorText(@StringRes text: Int) = ErrorText(stringResource(text))
 @Composable
 fun ErrorText(text: String) {
     Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+}
+
+/** "À vista" plus one chip per card; scrolls sideways when there are many cards. */
+@Composable
+fun PaymentSelector(
+    cards: List<CreditCard>,
+    selectedCardId: Long?,
+    onSelect: (Long?) -> Unit,
+    enabled: Boolean,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        FilterChip(
+            selected = selectedCardId == null,
+            onClick = { onSelect(null) },
+            enabled = enabled,
+            label = { Text(stringResource(R.string.payment_cash)) },
+        )
+        cards.forEach { card ->
+            FilterChip(
+                selected = selectedCardId == card.id,
+                onClick = { onSelect(card.id) },
+                enabled = enabled,
+                label = { Text(card.name) },
+            )
+        }
+    }
 }

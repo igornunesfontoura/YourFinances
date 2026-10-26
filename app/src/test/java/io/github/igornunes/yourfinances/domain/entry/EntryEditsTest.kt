@@ -1,12 +1,15 @@
 package io.github.igornunes.yourfinances.domain.entry
 
+import io.github.igornunes.yourfinances.domain.model.CreditCard
 import io.github.igornunes.yourfinances.domain.model.Entry
 import io.github.igornunes.yourfinances.domain.model.EntryStatus
 import io.github.igornunes.yourfinances.domain.model.EntryType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
 
 class EntryEditsTest {
@@ -15,7 +18,7 @@ class EntryEditsTest {
 
     @Test
     fun `new entry is confirmed and paid when it happened`() {
-        val entry = newEntry(EntryType.FLEXIBLE_EXPENSE, 4500, "  Cinema ", march10)
+        val entry = newEntry(EntryType.FLEXIBLE_EXPENSE, 4500, "  Cinema ", march10, card = null)
         assertEquals(EntryStatus.CONFIRMED, entry.status)
         assertEquals(march10, entry.paidOn)
         assertEquals("Cinema", entry.description)
@@ -23,8 +26,8 @@ class EntryEditsTest {
 
     @Test
     fun `editing a plain entry moves both dates`() {
-        val edited = newEntry(EntryType.FLEXIBLE_EXPENSE, 4500, "Cinema", march10)
-            .edited(EntryType.FLEXIBLE_EXPENSE, 5000, "Cinema", march12)
+        val edited = newEntry(EntryType.FLEXIBLE_EXPENSE, 4500, "Cinema", march10, card = null)
+            .edited(EntryType.FLEXIBLE_EXPENSE, 5000, "Cinema", march12, card = null)
         assertEquals(march12, edited.occurredOn)
         assertEquals(march12, edited.paidOn)
         assertEquals(5000L, edited.amountCents)
@@ -42,26 +45,53 @@ class EntryEditsTest {
             recurrenceId = 2,
             scheduledFor = march10,
         )
-        val edited = predicted.edited(EntryType.FIXED_EXPENSE, 16234, "Luz", march10)
+        val edited = predicted.edited(EntryType.FIXED_EXPENSE, 16234, "Luz", march10, card = null)
         assertEquals(EntryStatus.CONFIRMED, edited.status)
         assertEquals(16234L, edited.amountCents)
         assertEquals(march10, edited.scheduledFor)
     }
 
+    private val card = CreditCard(id = 1, name = "Card", closingDay = 10, dueDay = 20)
+
     @Test
-    fun `card entry only takes the new description`() {
-        val onCard = Entry(
-            type = EntryType.FLEXIBLE_EXPENSE,
-            amountCents = 4500,
-            description = "Jantar",
-            occurredOn = march10,
-            paidOn = LocalDate.of(2026, 4, 5),
-            creditCardId = 1,
-        )
-        assertFalse(onCard.isQuickEditable)
+    fun `card purchase is paid on the due date of its invoice`() {
+        val beforeClosing = newEntry(EntryType.FLEXIBLE_EXPENSE, 4500, "Jantar", march10, card)
+        assertEquals(1L, beforeClosing.creditCardId)
+        assertEquals(LocalDate.of(2026, 3, 20), beforeClosing.paidOn)
+
+        val afterClosing = newEntry(EntryType.FLEXIBLE_EXPENSE, 4500, "Jantar", march12, card)
+        assertEquals(LocalDate.of(2026, 4, 20), afterClosing.paidOn)
+    }
+
+    @Test
+    fun `editing a card entry moves it to the invoice of its new date`() {
+        val onCard = newEntry(EntryType.FLEXIBLE_EXPENSE, 4500, "Jantar", march10, card)
+        assertTrue(onCard.isQuickEditable)
         assertFalse(onCard.deletesWholePurchase)
-        val edited = onCard.edited(EntryType.INCOME, 9999, "Jantar fora", march12)
-        assertEquals(onCard.copy(description = "Jantar fora"), edited)
+
+        val moved = onCard.edited(EntryType.FLEXIBLE_EXPENSE, 4800, "Jantar", march12, card)
+        assertEquals(march12, moved.occurredOn)
+        assertEquals(LocalDate.of(2026, 4, 20), moved.paidOn)
+        assertEquals(4800L, moved.amountCents)
+
+        val offCard = onCard.edited(EntryType.FLEXIBLE_EXPENSE, 4500, "Jantar", march10, card = null)
+        assertNull(offCard.creditCardId)
+        assertEquals(march10, offCard.paidOn)
+    }
+
+    @Test
+    fun `fixing the description keeps the invoice even after the card's days changed`() {
+        val onCard = newEntry(EntryType.FLEXIBLE_EXPENSE, 4500, "Jnatar", march10, card) // due Mar 20
+        val daysChanged = card.copy(dueDay = 28)
+        val fixed = onCard.edited(EntryType.FLEXIBLE_EXPENSE, 4500, "Jantar", march10, daysChanged)
+        assertEquals(LocalDate.of(2026, 3, 20), fixed.paidOn)
+        assertEquals("Jantar", fixed.description)
+    }
+
+    @Test
+    fun `only expenses go on a card`() {
+        assertThrows<IllegalArgumentException> { newEntry(EntryType.INCOME, 100, "", march10, card) }
+        assertThrows<IllegalArgumentException> { newEntry(EntryType.INVESTMENT, 100, "", march10, card) }
     }
 
     @Test
@@ -78,7 +108,7 @@ class EntryEditsTest {
         )
         assertFalse(installment.isQuickEditable)
         assertTrue(installment.deletesWholePurchase)
-        val edited = installment.edited(EntryType.FLEXIBLE_EXPENSE, 1200, "TV sala", march12)
+        val edited = installment.edited(EntryType.FLEXIBLE_EXPENSE, 1200, "TV sala", march12, card = null)
         assertEquals(installment.copy(description = "TV sala"), edited)
     }
 

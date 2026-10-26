@@ -1,9 +1,11 @@
 package io.github.igornunes.yourfinances.ui.month
 
+import io.github.igornunes.yourfinances.domain.model.CreditCard
 import io.github.igornunes.yourfinances.domain.model.DateBasis
 import io.github.igornunes.yourfinances.domain.model.Entry
 import io.github.igornunes.yourfinances.domain.model.EntryStatus
 import io.github.igornunes.yourfinances.domain.model.EntryType
+import io.github.igornunes.yourfinances.testing.FakeCreditCardRepository
 import io.github.igornunes.yourfinances.testing.FakeEntryRepository
 import io.github.igornunes.yourfinances.testing.MainDispatcherExtension
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,7 +47,7 @@ class MonthViewModelTest {
 
     /** A subscriber keeps the WhileSubscribed state flowing. */
     private fun TestScope.subscribed(): MonthViewModel {
-        val viewModel = MonthViewModel(repository, clock)
+        val viewModel = MonthViewModel(repository, FakeCreditCardRepository(listOf(CreditCard(id = 3, name = "Nubank", closingDay = 1, dueDay = 10))), clock)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
         return viewModel
     }
@@ -63,6 +65,7 @@ class MonthViewModelTest {
         assertEquals(2, state.days[1].entries.size)
         assertEquals(500000L, state.totals.incomeCents)
         assertEquals(30000L, state.totals.expensesCents)
+        assertEquals(mapOf(3L to "Nubank"), state.cardNames)
     }
 
     @Test

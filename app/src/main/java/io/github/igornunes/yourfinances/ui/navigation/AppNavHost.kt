@@ -9,6 +9,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import io.github.igornunes.yourfinances.ui.card.CardDetailRoute
+import io.github.igornunes.yourfinances.ui.card.CardFormRoute
+import io.github.igornunes.yourfinances.ui.card.CardListRoute
 import io.github.igornunes.yourfinances.ui.entry.EntryFormRoute
 import io.github.igornunes.yourfinances.ui.installment.InstallmentFormRoute
 import io.github.igornunes.yourfinances.ui.installment.InstallmentListRoute
@@ -24,10 +27,17 @@ private const val ID = "id"
 private const val NO_ID = -1L
 private const val ENTRY = "entry?$ID={$ID}"
 private const val RECURRENCE = "recurrence?$ID={$ID}"
+private const val CARDS = "cards"
+private const val CARD = "card/{$ID}"
+private const val CARD_FORM = "cardForm?$ID={$ID}"
 
 private fun entryRoute(id: Long? = null) = "entry?$ID=${id ?: NO_ID}"
 
 private fun recurrenceRoute(id: Long? = null) = "recurrence?$ID=${id ?: NO_ID}"
+
+private fun cardRoute(id: Long) = "card/$id"
+
+private fun cardFormRoute(id: Long? = null) = "cardForm?$ID=${id ?: NO_ID}"
 
 private val idArgument = listOf(navArgument(ID) { type = NavType.LongType; defaultValue = NO_ID })
 
@@ -56,6 +66,7 @@ fun AppNavHost() {
                 onOpenEntry = { id -> navController.navigateFrom(entry, entryRoute(id)) },
                 onOpenRecurrences = { navController.navigateFrom(entry, RECURRENCES) },
                 onOpenInstallments = { navController.navigateFrom(entry, INSTALLMENTS) },
+                onOpenCards = { navController.navigateFrom(entry, CARDS) },
             )
         }
         composable(ENTRY, arguments = idArgument) { entry ->
@@ -79,6 +90,25 @@ fun AppNavHost() {
         }
         composable(INSTALLMENT_NEW) { entry ->
             InstallmentFormRoute(onDone = { navController.closeFrom(entry) })
+        }
+        composable(CARDS) { entry ->
+            CardListRoute(
+                onBack = { navController.closeFrom(entry) },
+                onAdd = { navController.navigateFrom(entry, cardFormRoute()) },
+                onOpen = { id -> navController.navigateFrom(entry, cardRoute(id)) },
+            )
+        }
+        composable(CARD, arguments = listOf(navArgument(ID) { type = NavType.LongType })) { entry ->
+            val cardId = requireNotNull(entry.arguments).getLong(ID)
+            CardDetailRoute(
+                cardId = cardId,
+                onBack = { navController.closeFrom(entry) },
+                onEdit = { navController.navigateFrom(entry, cardFormRoute(cardId)) },
+                onOpenEntry = { id -> navController.navigateFrom(entry, entryRoute(id)) },
+            )
+        }
+        composable(CARD_FORM, arguments = idArgument) { entry ->
+            CardFormRoute(cardId = entry.optionalId(), onDone = { navController.closeFrom(entry) })
         }
     }
 }

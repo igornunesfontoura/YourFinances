@@ -20,6 +20,9 @@ interface InstallmentRepository {
     /** Stores a purchase outside a credit card and its installments atomically; returns its id. */
     suspend fun add(purchase: InstallmentPurchase, paymentDates: List<LocalDate>): Long
 
+    /** Stores a card purchase; installments are paid on the due dates of consecutive invoices. */
+    suspend fun addOnCard(purchase: InstallmentPurchase, card: CreditCard): Long
+
     /** Deletes the purchase and, by cascade, all of its installments. */
     suspend fun delete(purchaseId: Long)
 }
@@ -36,8 +39,7 @@ class RoomInstallmentRepository(private val database: AppDatabase) : Installment
         return insert(purchase, paymentDates)
     }
 
-    /** Stores a card purchase; installments are paid on the due dates of consecutive invoices. */
-    suspend fun addOnCard(purchase: InstallmentPurchase, card: CreditCard): Long =
+    override suspend fun addOnCard(purchase: InstallmentPurchase, card: CreditCard): Long =
         insert(purchase, purchase.cardPaymentDates(card))
 
     override suspend fun delete(purchaseId: Long) = purchaseDao.deleteById(purchaseId)

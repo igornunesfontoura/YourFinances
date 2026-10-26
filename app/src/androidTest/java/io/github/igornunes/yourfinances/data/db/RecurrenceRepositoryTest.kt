@@ -104,7 +104,7 @@ class RecurrenceRepositoryTest {
         val id = recurrences.add(streaming, window)
         val march = all().first()
 
-        val edited = march.edited(EntryType.FIXED_EXPENSE, 5490, "Streaming 4K", march.occurredOn)
+        val edited = march.edited(EntryType.FIXED_EXPENSE, 5490, "Streaming 4K", march.occurredOn, card = null)
         recurrences.applyToUpcoming(edited, window)
 
         val result = all()
@@ -142,7 +142,7 @@ class RecurrenceRepositoryTest {
     fun applyToUpcomingAfterTemplateDeletionStillSavesTheEntry() = runTest {
         val id = recurrences.add(streaming, window)
         val march = all().first()
-        val edited = march.edited(EntryType.FIXED_EXPENSE, 5490, "Streaming", march.occurredOn)
+        val edited = march.edited(EntryType.FIXED_EXPENSE, 5490, "Streaming", march.occurredOn, card = null)
         recurrences.delete(streaming.copy(id = id), predictionWindow(LocalDate.of(2026, 4, 1)))
 
         recurrences.applyToUpcoming(edited.copy(), window)

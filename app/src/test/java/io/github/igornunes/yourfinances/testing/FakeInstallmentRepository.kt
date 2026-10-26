@@ -2,7 +2,9 @@ package io.github.igornunes.yourfinances.testing
 
 import io.github.igornunes.yourfinances.data.repository.InstallmentRepository
 import io.github.igornunes.yourfinances.domain.installment.InstallmentPlan
+import io.github.igornunes.yourfinances.domain.installment.cardPaymentDates
 import io.github.igornunes.yourfinances.domain.installment.toEntries
+import io.github.igornunes.yourfinances.domain.model.CreditCard
 import io.github.igornunes.yourfinances.domain.model.InstallmentPurchase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +24,9 @@ class FakeInstallmentRepository(initial: List<InstallmentPlan> = emptyList()) : 
         plans.update { it + InstallmentPlan(stored, stored.toEntries(paymentDates)) }
         return stored.id
     }
+
+    override suspend fun addOnCard(purchase: InstallmentPurchase, card: CreditCard): Long =
+        add(purchase, purchase.cardPaymentDates(card))
 
     override suspend fun delete(purchaseId: Long) {
         check(!failWrites) { "write failed" }

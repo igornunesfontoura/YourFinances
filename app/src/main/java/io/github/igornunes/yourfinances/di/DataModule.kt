@@ -6,6 +6,7 @@ import io.github.igornunes.yourfinances.data.repository.CreditCardRepository
 import io.github.igornunes.yourfinances.data.repository.EntryRepository
 import io.github.igornunes.yourfinances.data.repository.InstallmentRepository
 import io.github.igornunes.yourfinances.data.repository.RecurrenceRepository
+import io.github.igornunes.yourfinances.data.repository.RoomCreditCardRepository
 import io.github.igornunes.yourfinances.data.repository.RoomEntryRepository
 import io.github.igornunes.yourfinances.data.repository.RoomInstallmentRepository
 import io.github.igornunes.yourfinances.data.repository.RoomRecurrenceRepository
@@ -20,11 +21,10 @@ val dataModule = module {
     single { DatabaseKeyProvider(File(androidContext().noBackupFilesDir, "database.key")) }
     single { AppDatabase.buildEncrypted(androidContext(), get<DatabaseKeyProvider>().getOrCreatePassphrase()) }
     single { get<AppDatabase>().categoryDao() }
-    single { get<AppDatabase>().creditCardDao() }
     single<Clock> { Clock.systemDefaultZone() }
     single<EntryRepository> { RoomEntryRepository(get()) }
     single<RecurrenceRepository> { RoomRecurrenceRepository(get()) }
     single<InstallmentRepository> { RoomInstallmentRepository(get()) }
     single { CategoryRepository(get()) }
-    single { CreditCardRepository(get()) }
+    single<CreditCardRepository> { RoomCreditCardRepository(get()) }
 }

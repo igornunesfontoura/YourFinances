@@ -37,6 +37,15 @@ fun CreditCard.invoiceClosingIn(closingMonth: YearMonth): Invoice {
     )
 }
 
+/** Cash date of a single purchase on this card: the due date of the invoice it falls into. */
+fun CreditCard.paymentDateFor(purchasedOn: LocalDate): LocalDate = invoiceFor(purchasedOn).dueDate
+
+/** The invoice due on [dueDate]'s month under the card's current days. */
+fun CreditCard.invoiceDueIn(dueDate: LocalDate): Invoice {
+    val dueMonth = YearMonth.from(dueDate)
+    return invoiceClosingIn(if (dueDay > closingDay) dueMonth else dueMonth.minusMonths(1))
+}
+
 /** Due dates of [count] consecutive invoices, starting with the one [purchasedOn] falls into. */
 fun CreditCard.dueDatesFrom(purchasedOn: LocalDate, count: Int): List<LocalDate> {
     val first = invoiceFor(purchasedOn).closingMonth

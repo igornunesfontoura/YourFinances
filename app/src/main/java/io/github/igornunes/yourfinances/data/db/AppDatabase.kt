@@ -10,6 +10,7 @@ import io.github.igornunes.yourfinances.data.db.dao.CreditCardDao
 import io.github.igornunes.yourfinances.data.db.dao.EntryDao
 import io.github.igornunes.yourfinances.data.db.dao.InstallmentPurchaseDao
 import io.github.igornunes.yourfinances.data.db.dao.InvestmentDao
+import io.github.igornunes.yourfinances.data.db.dao.InvoicePaymentDao
 import io.github.igornunes.yourfinances.data.db.dao.RateDao
 import io.github.igornunes.yourfinances.data.db.dao.RecurrenceDao
 import io.github.igornunes.yourfinances.data.db.entity.CategoryEntity
@@ -17,6 +18,7 @@ import io.github.igornunes.yourfinances.data.db.entity.CreditCardEntity
 import io.github.igornunes.yourfinances.data.db.entity.EntryEntity
 import io.github.igornunes.yourfinances.data.db.entity.InstallmentPurchaseEntity
 import io.github.igornunes.yourfinances.data.db.entity.InvestmentEntity
+import io.github.igornunes.yourfinances.data.db.entity.InvoicePaymentEntity
 import io.github.igornunes.yourfinances.data.db.entity.RateEntity
 import io.github.igornunes.yourfinances.data.db.entity.RecurrenceEntity
 import io.github.igornunes.yourfinances.data.db.entity.RecurrenceSkipEntity
@@ -32,8 +34,9 @@ import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
         EntryEntity::class,
         InvestmentEntity::class,
         RateEntity::class,
+        InvoicePaymentEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -45,6 +48,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun entryDao(): EntryDao
     abstract fun investmentDao(): InvestmentDao
     abstract fun rateDao(): RateDao
+    abstract fun invoicePaymentDao(): InvoicePaymentDao
 
     companion object {
         const val NAME = "your_finances.db"
@@ -54,6 +58,7 @@ abstract class AppDatabase : RoomDatabase() {
             System.loadLibrary("sqlcipher")
             return Room.databaseBuilder(context, AppDatabase::class.java, NAME)
                 .openHelperFactory(SupportOpenHelperFactory(passphrase))
+                .addMigrations(*ALL_MIGRATIONS)
                 .build()
         }
     }

@@ -38,7 +38,7 @@
     <string name="entry_today">Hoje</string>
     <string name="entry_save">Salvar</string>
     <string name="save_failed">Não foi possível salvar. Tente novamente.</string>
-    <string name="entry_locked_hint">Parcelas e compras no cartão: aqui só a descrição pode ser alterada. Excluir uma parcela exclui a compra inteira.</string>
+    <string name="entry_locked_hint">Parcela de compra parcelada: aqui só a descrição pode ser alterada. Excluir uma parcela exclui a compra inteira.</string>
     <string name="entry_delete">Excluir</string>
     <string name="entry_delete_confirm_title">Excluir lançamento?</string>
     <string name="entry_delete_confirm_message">Esta ação não pode ser desfeita.</string>
@@ -92,6 +92,39 @@
     <string name="installment_remaining">Falta pagar %1$s</string>
     <string name="purchase_delete_confirm_title">Excluir a compra inteira?</string>
     <string name="purchase_delete_confirm_message">Todas as parcelas desta compra serão removidas, inclusive as já pagas.</string>
+
+    <!-- Cards and invoices -->
+    <string name="payment_cash">À vista</string>
+    <string name="payment_card_due">Entra na fatura que vence em %1$s</string>
+    <string name="installment_dates">De %1$s a %2$s</string>
+    <string name="cards_title">Cartões</string>
+    <string name="cards_empty">Nenhum cartão cadastrado</string>
+    <string name="card_add">Novo cartão</string>
+    <string name="card_new_title">Novo cartão</string>
+    <string name="card_edit_title">Editar cartão</string>
+    <string name="card_name">Nome do cartão</string>
+    <string name="card_closing_day">Dia do fechamento</string>
+    <string name="card_due_day">Dia do vencimento</string>
+    <string name="card_days_hint">Compras feitas depois do fechamento entram na fatura seguinte. Em meses mais curtos, vale o último dia.</string>
+    <string name="card_reschedule_hint">Mudar os dias move os lançamentos que ainda não venceram para as faturas novas. Os já vencidos ficam como estão.</string>
+    <string name="card_days">Fecha dia %1$d · vence dia %2$d</string>
+    <string name="card_current_invoice">Fatura atual: %1$s, vence em %2$s</string>
+    <string name="card_closed_invoice">A pagar: %1$s até %2$s</string>
+    <string name="card_overdue_invoice">Vencida: %1$s em %2$s</string>
+    <string name="card_delete_blocked">Este cartão tem lançamentos e não pode ser excluído.</string>
+    <string name="card_delete_confirm_title">Excluir cartão?</string>
+    <string name="card_delete_confirm_message">Só é possível excluir cartões sem lançamentos.</string>
+    <string name="invoice_open">Aberta</string>
+    <string name="invoice_closed">Fechada</string>
+    <string name="invoice_overdue">Vencida</string>
+    <string name="invoice_paid">Paga</string>
+    <string name="invoice_paid_on">Paga em %1$s</string>
+    <string name="invoice_due_on">Vence em %1$s</string>
+    <string name="invoice_period">Compras de %1$s a %2$s</string>
+    <string name="invoice_mark_paid">Marcar como paga</string>
+    <string name="invoice_unmark_paid">Desfazer</string>
+    <string name="invoice_empty">Nenhuma compra nesta fatura</string>
+    <string name="invoice_entry_untitled">Compra</string>
 
     <string name="action_clear">Limpar</string>
     <string name="action_back">Voltar</string>

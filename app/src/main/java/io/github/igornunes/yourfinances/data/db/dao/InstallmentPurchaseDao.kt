@@ -26,4 +26,10 @@ interface InstallmentPurchaseDao {
     @Transaction
     @Query("SELECT * FROM installment_purchases ORDER BY purchased_on DESC, id DESC")
     fun observeAllWithInstallments(): Flow<List<PurchaseWithInstallments>>
+
+    @Query("SELECT * FROM installment_purchases WHERE credit_card_id = :cardId")
+    suspend fun getByCard(cardId: Long): List<InstallmentPurchaseEntity>
+
+    @Query("SELECT COUNT(*) FROM installment_purchases WHERE credit_card_id = :cardId")
+    suspend fun countByCard(cardId: Long): Int
 }

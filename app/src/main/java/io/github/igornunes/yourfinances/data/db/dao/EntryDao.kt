@@ -47,4 +47,16 @@ interface EntryDao {
             "AND (scheduled_for < :startsOn OR (:endsOn IS NOT NULL AND scheduled_for > :endsOn))",
     )
     suspend fun deletePredictedOutside(recurrenceId: Long, startsOn: LocalDate, endsOn: LocalDate?)
+
+    @Update
+    suspend fun updateAll(entries: List<EntryEntity>)
+
+    @Query("SELECT * FROM entries WHERE credit_card_id IS NOT NULL")
+    fun observeCardEntries(): Flow<List<EntryEntity>>
+
+    @Query("SELECT * FROM entries WHERE credit_card_id = :cardId")
+    suspend fun getCardEntries(cardId: Long): List<EntryEntity>
+
+    @Query("SELECT COUNT(*) FROM entries WHERE credit_card_id = :cardId")
+    suspend fun countByCard(cardId: Long): Int
 }

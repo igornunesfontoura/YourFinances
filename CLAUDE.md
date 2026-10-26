@@ -128,7 +128,7 @@ Este é o número mais importante do app. Qualquer mudança nessa regra exige te
 1. [x] Modelo de dados e camada `domain` com testes (Room já sobre SQLCipher)
 2. [x] Cadastro rápido de lançamento (meta: 2–3 toques) e lista do mês
 3. [x] Recorrências e parcelas
-4. [ ] Cartão de crédito e faturas
+4. [x] Cartão de crédito e faturas
 5. [ ] Tela "quanto ainda posso gastar"
 6. [ ] SQLCipher, bloqueio biométrico, backup criptografado e exportação CSV
 7. [ ] Investimentos com taxas do BCB

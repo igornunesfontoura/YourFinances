@@ -2,6 +2,7 @@ package io.github.igornunes.yourfinances.ui.month
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.igornunes.yourfinances.data.repository.CreditCardRepository
 import io.github.igornunes.yourfinances.data.repository.EntryRepository
 import io.github.igornunes.yourfinances.domain.budget.MonthTotals
 import io.github.igornunes.yourfinances.domain.budget.monthTotals
@@ -32,10 +33,11 @@ data class MonthUiState(
     val days: List<DayGroup> = emptyList(),
     val loading: Boolean = true,
     val actionFailed: Boolean = false,
+    val cardNames: Map<Long, String> = emptyMap(),
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class MonthViewModel(private val entries: EntryRepository, clock: Clock) : ViewModel() {
+class MonthViewModel(private val entries: EntryRepository, cards: CreditCardRepository, clock: Clock) : ViewModel() {
     private val selection = MutableStateFlow(YearMonth.now(clock) to DateBasis.ACCRUAL)
     private val actionFailed = MutableStateFlow(false)
 
@@ -54,6 +56,7 @@ class MonthViewModel(private val entries: EntryRepository, clock: Clock) : ViewM
             }
         }
         .combine(actionFailed) { state, failed -> state.copy(actionFailed = failed) }
+        .combine(cards.observeAll()) { state, list -> state.copy(cardNames = list.associate { it.id to it.name }) }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),

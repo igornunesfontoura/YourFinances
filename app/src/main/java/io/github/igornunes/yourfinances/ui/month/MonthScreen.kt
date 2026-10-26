@@ -64,6 +64,7 @@ fun MonthRoute(
     onOpenEntry: (Long) -> Unit,
     onOpenRecurrences: () -> Unit,
     onOpenInstallments: () -> Unit,
+    onOpenCards: () -> Unit,
     viewModel: MonthViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -78,6 +79,7 @@ fun MonthRoute(
         onDismissError = viewModel::dismissError,
         onOpenRecurrences = onOpenRecurrences,
         onOpenInstallments = onOpenInstallments,
+        onOpenCards = onOpenCards,
     )
 }
 
@@ -94,6 +96,7 @@ fun MonthScreen(
     onDismissError: () -> Unit,
     onOpenRecurrences: () -> Unit,
     onOpenInstallments: () -> Unit,
+    onOpenCards: () -> Unit,
 ) {
     val snackbar = remember { SnackbarHostState() }
     val errorMessage = stringResource(R.string.save_failed)
@@ -138,6 +141,13 @@ fun MonthScreen(
                                     onOpenInstallments()
                                 },
                             )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.cards_title)) },
+                                onClick = {
+                                    menuOpen = false
+                                    onOpenCards()
+                                },
+                            )
                         }
                     }
                 },
@@ -172,7 +182,12 @@ fun MonthScreen(
                     )
                 }
                 items(day.entries, key = { it.id }) { entry ->
-                    EntryRow(entry, onClick = { onOpenEntry(entry.id) }, onConfirm = { onConfirmEntry(entry) })
+                    EntryRow(
+                        entry = entry,
+                        cardName = entry.creditCardId?.let { state.cardNames[it] },
+                        onClick = { onOpenEntry(entry.id) },
+                        onConfirm = { onConfirmEntry(entry) },
+                    )
                 }
             }
         }
@@ -224,13 +239,14 @@ private fun TotalLine(label: Int, cents: Long, emphasized: Boolean = false) {
 }
 
 @Composable
-private fun EntryRow(entry: Entry, onClick: () -> Unit, onConfirm: () -> Unit) {
+private fun EntryRow(entry: Entry, cardName: String?, onClick: () -> Unit, onConfirm: () -> Unit) {
     val title = entry.description.ifBlank { stringResource(entry.type.label) }
     val details = buildList {
         add(stringResource(entry.type.label))
         if (entry.installmentNumber != null && entry.installmentCount != null) {
             add(stringResource(R.string.entry_installment, entry.installmentNumber, entry.installmentCount))
         }
+        if (cardName != null) add(cardName)
         if (entry.status == EntryStatus.PREDICTED) add(stringResource(R.string.entry_predicted))
     }.joinToString(stringResource(R.string.entry_details_separator))
     val isIncome = entry.type == EntryType.INCOME

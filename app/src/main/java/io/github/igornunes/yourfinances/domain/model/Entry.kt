@@ -2,7 +2,16 @@ package io.github.igornunes.yourfinances.domain.model
 
 import java.time.LocalDate
 
-enum class EntryType { INCOME, FIXED_EXPENSE, FLEXIBLE_EXPENSE, INVESTMENT }
+enum class EntryType {
+    INCOME,
+    FIXED_EXPENSE,
+    FLEXIBLE_EXPENSE,
+    INVESTMENT,
+    ;
+
+    /** Only expenses can be charged to a credit card. */
+    val canUseCard: Boolean get() = this == FIXED_EXPENSE || this == FLEXIBLE_EXPENSE
+}
 
 enum class EntryStatus { PREDICTED, CONFIRMED }
 
@@ -40,6 +49,7 @@ data class Entry(
         require(installmentFields.all { it == null } || installmentFields.none { it == null }) {
             "installment fields must be set together"
         }
+        require(creditCardId == null || type.canUseCard) { "only expenses can be charged to a card" }
         if (installmentNumber != null && installmentCount != null) {
             require(installmentNumber in 1..installmentCount) { "installmentNumber out of range" }
         }
