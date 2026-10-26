@@ -62,6 +62,7 @@ Relatórios precisam deixar claro se usam competência ou caixa.
 
 ### Parcelas
 - Uma compra parcelada gera N lançamentos vinculados à compra original, com `installmentNumber` e `installmentCount`.
+- A competência (`occurredOn`) de cada parcela é a data em que ela vence, para o orçamento mensal refletir o peso de cada mês. A data real da compra fica em `InstallmentPurchase.purchasedOn`.
 - O app deve conseguir responder: quando cada parcelamento termina e quanto do futuro já está comprometido por mês.
 
 ### Cartão de crédito

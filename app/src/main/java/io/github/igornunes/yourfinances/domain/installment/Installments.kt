@@ -19,8 +19,10 @@ fun InstallmentPurchase.cardPaymentDates(card: CreditCard): List<LocalDate> {
 }
 
 /**
- * One entry per installment. All share the accrual date [InstallmentPurchase.purchasedOn];
- * each is paid on the matching date in [paymentDates]. The remainder cents go to the first one.
+ * One entry per installment, paid on the matching date in [paymentDates]. Each installment also
+ * accrues in the month it is due (not the purchase month), so monthly budgets by competência
+ * spread the purchase; [InstallmentPurchase.purchasedOn] keeps the real purchase date.
+ * The remainder cents go to the first one.
  */
 fun InstallmentPurchase.toEntries(paymentDates: List<LocalDate>): List<Entry> {
     require(paymentDates.size == installmentCount) { "expected $installmentCount payment dates" }
@@ -29,7 +31,7 @@ fun InstallmentPurchase.toEntries(paymentDates: List<LocalDate>): List<Entry> {
             type = type,
             amountCents = amount,
             description = description,
-            occurredOn = purchasedOn,
+            occurredOn = paymentDates[index],
             paidOn = paymentDates[index],
             categoryId = categoryId,
             creditCardId = creditCardId,

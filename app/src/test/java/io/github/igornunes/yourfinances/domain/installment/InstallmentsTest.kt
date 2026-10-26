@@ -32,7 +32,8 @@ class InstallmentsTest {
         entries.forEach {
             assertEquals(42L, it.installmentPurchaseId)
             assertEquals(3, it.installmentCount)
-            assertEquals(purchase.purchasedOn, it.occurredOn)
+            // Each installment accrues in the month it is due.
+            assertEquals(it.paidOn, it.occurredOn)
         }
         assertEquals(
             listOf(LocalDate.of(2026, 2, 10), LocalDate.of(2026, 3, 10), LocalDate.of(2026, 4, 10)),
