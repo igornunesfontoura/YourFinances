@@ -7,6 +7,8 @@ import io.github.igornunes.yourfinances.domain.budget.MonthTotals
 import io.github.igornunes.yourfinances.domain.budget.monthTotals
 import io.github.igornunes.yourfinances.domain.model.DateBasis
 import io.github.igornunes.yourfinances.domain.model.Entry
+import io.github.igornunes.yourfinances.domain.entry.confirmed
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
 import java.time.YearMonth
@@ -28,11 +31,13 @@ data class MonthUiState(
     val totals: MonthTotals = MonthTotals(),
     val days: List<DayGroup> = emptyList(),
     val loading: Boolean = true,
+    val actionFailed: Boolean = false,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MonthViewModel(private val entries: EntryRepository, clock: Clock) : ViewModel() {
     private val selection = MutableStateFlow(YearMonth.now(clock) to DateBasis.ACCRUAL)
+    private val actionFailed = MutableStateFlow(false)
 
     val state: StateFlow<MonthUiState> = selection
         .flatMapLatest { (month, basis) ->
@@ -48,6 +53,7 @@ class MonthViewModel(private val entries: EntryRepository, clock: Clock) : ViewM
                 )
             }
         }
+        .combine(actionFailed) { state, failed -> state.copy(actionFailed = failed) }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
@@ -59,4 +65,19 @@ class MonthViewModel(private val entries: EntryRepository, clock: Clock) : ViewM
     fun nextMonth() = selection.update { (month, basis) -> month.plusMonths(1) to basis }
 
     fun setBasis(basis: DateBasis) = selection.update { (month, _) -> month to basis }
+
+    /** One tap: the predicted entry happened with the predicted values. */
+    fun confirm(entry: Entry) {
+        viewModelScope.launch {
+            try {
+                entries.update(entry.confirmed())
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                actionFailed.value = true
+            }
+        }
+    }
+
+    fun dismissError() = actionFailed.update { false }
 }

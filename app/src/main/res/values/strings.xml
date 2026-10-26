@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="pt-rBR">
     <string name="app_name">Your Finances</string>
 
     <!-- Entry types -->
@@ -37,11 +37,63 @@
     <string name="entry_date">Data</string>
     <string name="entry_today">Hoje</string>
     <string name="entry_save">Salvar</string>
-    <string name="entry_save_failed">Não foi possível salvar. Tente novamente.</string>
-    <string name="entry_locked_hint">Parcelas e compras no cartão: aqui só a descrição pode ser alterada.</string>
+    <string name="save_failed">Não foi possível salvar. Tente novamente.</string>
+    <string name="entry_locked_hint">Parcelas e compras no cartão: aqui só a descrição pode ser alterada. Excluir uma parcela exclui a compra inteira.</string>
     <string name="entry_delete">Excluir</string>
     <string name="entry_delete_confirm_title">Excluir lançamento?</string>
     <string name="entry_delete_confirm_message">Esta ação não pode ser desfeita.</string>
+    <string name="entry_confirm">Confirmar lançamento previsto</string>
+    <string name="entry_apply_to_upcoming">Aplicar às próximas</string>
+    <string name="entry_apply_to_upcoming_hint">Também altera a recorrência e os próximos lançamentos previstos</string>
+    <string name="date_chip">%1$s: %2$s</string>
+    <string name="menu_more">Mais opções</string>
+
+    <!-- Recurrences -->
+    <string name="frequency_monthly">Mensal</string>
+    <string name="frequency_yearly">Anual</string>
+    <string name="recurrences_title">Recorrências</string>
+    <string name="recurrences_empty">Nenhuma recorrência cadastrada</string>
+    <string name="recurrence_add">Nova recorrência</string>
+    <string name="recurrence_new_title">Nova recorrência</string>
+    <string name="recurrence_edit_title">Editar recorrência</string>
+    <string name="recurrence_row_details">%1$s · %2$s</string>
+    <string name="recurrence_schedule_monthly">Todo dia %1$d</string>
+    <string name="recurrence_schedule_yearly">Todo ano, %1$d de %2$s</string>
+    <string name="recurrence_day">Dia do mês</string>
+    <string name="recurrence_day_hint">De 1 a 31. Em meses mais curtos, cai no último dia.</string>
+    <string name="recurrence_starts_on">Início</string>
+    <string name="recurrence_ends_on">Fim</string>
+    <string name="recurrence_no_end">sem data</string>
+    <string name="recurrence_yearly_hint">Repete todo ano em %1$s, o mês do início.</string>
+    <string name="recurrence_ends_before_start">O fim não pode ser antes do início.</string>
+    <string name="recurrence_prediction_hint">Os lançamentos previstos são criados do mês atual até dois meses à frente. Lançamentos já confirmados não mudam.</string>
+    <string name="recurrence_delete_confirm_title">Excluir recorrência?</string>
+    <string name="recurrence_delete_confirm_message">Os lançamentos previstos serão removidos. Os já confirmados continuam no histórico.</string>
+
+    <!-- Installments -->
+    <string name="installments_title">Parcelamentos</string>
+    <string name="installments_empty">Nenhuma compra parcelada</string>
+    <string name="installments_active">Em andamento</string>
+    <string name="installments_finished">Quitadas</string>
+    <string name="installments_committed">Já comprometido por mês</string>
+    <string name="installment_add">Nova compra parcelada</string>
+    <string name="installment_new_title">Compra parcelada</string>
+    <string name="installment_untitled">Compra parcelada</string>
+    <string name="installment_total">Valor total</string>
+    <string name="installment_count">Número de parcelas</string>
+    <string name="installment_count_invalid">Informe de 2 a %1$d parcelas.</string>
+    <string name="installment_preview_equal" tools:ignore="PluralsCandidate">%1$d parcelas de %2$s</string>
+    <string name="installment_preview_remainder" tools:ignore="PluralsCandidate">1ª parcela de %1$s e mais %2$d de %3$s</string>
+    <string name="installment_purchased_on">Compra</string>
+    <string name="installment_first_payment">1ª parcela</string>
+    <string name="installment_first_before_purchase">A 1ª parcela não pode ser antes da compra.</string>
+    <string name="installment_paid_of" tools:ignore="PluralsCandidate">%1$d de %2$d pagas · total %3$s</string>
+    <string name="installment_ends_in">Termina em %1$s</string>
+    <string name="installment_remaining">Falta pagar %1$s</string>
+    <string name="purchase_delete_confirm_title">Excluir a compra inteira?</string>
+    <string name="purchase_delete_confirm_message">Todas as parcelas desta compra serão removidas, inclusive as já pagas.</string>
+
+    <string name="action_clear">Limpar</string>
     <string name="action_back">Voltar</string>
     <string name="action_cancel">Cancelar</string>
     <string name="action_ok">OK</string>

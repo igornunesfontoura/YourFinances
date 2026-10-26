@@ -59,7 +59,7 @@ class EntryEditsTest {
             creditCardId = 1,
         )
         assertFalse(onCard.isQuickEditable)
-        assertTrue(onCard.isQuickDeletable)
+        assertFalse(onCard.deletesWholePurchase)
         val edited = onCard.edited(EntryType.INCOME, 9999, "Jantar fora", march12)
         assertEquals(onCard.copy(description = "Jantar fora"), edited)
     }
@@ -77,8 +77,23 @@ class EntryEditsTest {
             installmentCount = 5,
         )
         assertFalse(installment.isQuickEditable)
-        assertFalse(installment.isQuickDeletable)
+        assertTrue(installment.deletesWholePurchase)
         val edited = installment.edited(EntryType.FLEXIBLE_EXPENSE, 1200, "TV sala", march12)
         assertEquals(installment.copy(description = "TV sala"), edited)
+    }
+
+    @Test
+    fun `confirming keeps the predicted values`() {
+        val predicted = Entry(
+            type = EntryType.FIXED_EXPENSE,
+            amountCents = 4990,
+            description = "Streaming",
+            occurredOn = march10,
+            paidOn = march10,
+            status = EntryStatus.PREDICTED,
+            recurrenceId = 1,
+            scheduledFor = march10,
+        )
+        assertEquals(predicted.copy(status = EntryStatus.CONFIRMED), predicted.confirmed())
     }
 }

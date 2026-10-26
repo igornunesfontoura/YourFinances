@@ -16,6 +16,9 @@ fun newEntry(type: EntryType, amountCents: Long, description: String, occurredOn
         status = EntryStatus.CONFIRMED,
     )
 
+/** The user checked a predicted entry against reality and kept its values. */
+fun Entry.confirmed(): Entry = copy(status = EntryStatus.CONFIRMED)
+
 /**
  * Installments must keep adding up to their purchase and card entries must stay on the invoice of
  * their date, so the quick form only edits their description. Changing them is a purchase/card
@@ -24,9 +27,9 @@ fun newEntry(type: EntryType, amountCents: Long, description: String, occurredOn
 val Entry.isQuickEditable: Boolean
     get() = installmentPurchaseId == null && creditCardId == null
 
-/** Deleting a single installment would break its purchase total. */
-val Entry.isQuickDeletable: Boolean
-    get() = installmentPurchaseId == null
+/** Deleting a single installment would break its purchase total: the whole purchase goes instead. */
+val Entry.deletesWholePurchase: Boolean
+    get() = installmentPurchaseId != null
 
 /**
  * Applies the quick-form fields to an existing entry. Saving confirms it: the user has reviewed

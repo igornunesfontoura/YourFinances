@@ -73,6 +73,7 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.sqlite)
     implementation(libs.sqlcipher.android)
+    implementation(libs.androidx.work.runtime.ktx)
 
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)

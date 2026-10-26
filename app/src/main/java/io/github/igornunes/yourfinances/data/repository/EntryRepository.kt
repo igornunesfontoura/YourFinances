@@ -5,17 +5,10 @@ import io.github.igornunes.yourfinances.data.db.AppDatabase
 import io.github.igornunes.yourfinances.data.db.entity.RecurrenceSkipEntity
 import io.github.igornunes.yourfinances.data.db.entity.toDomain
 import io.github.igornunes.yourfinances.data.db.entity.toEntity
-import io.github.igornunes.yourfinances.domain.installment.cardPaymentDates
-import io.github.igornunes.yourfinances.domain.installment.toEntries
-import io.github.igornunes.yourfinances.domain.model.CreditCard
 import io.github.igornunes.yourfinances.domain.model.DateBasis
 import io.github.igornunes.yourfinances.domain.model.Entry
-import io.github.igornunes.yourfinances.domain.model.InstallmentPurchase
-import io.github.igornunes.yourfinances.domain.model.Recurrence
-import io.github.igornunes.yourfinances.domain.recurrence.predictedEntriesBetween
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import java.time.LocalDate
 import java.time.YearMonth
 
 /** Entries as the UI sees them. */
@@ -33,7 +26,6 @@ interface EntryRepository {
 
 class RoomEntryRepository(private val database: AppDatabase) : EntryRepository {
     private val entryDao = database.entryDao()
-    private val purchaseDao = database.installmentPurchaseDao()
     private val recurrenceDao = database.recurrenceDao()
 
     override fun observeMonth(month: YearMonth, basis: DateBasis): Flow<List<Entry>> {
@@ -45,9 +37,6 @@ class RoomEntryRepository(private val database: AppDatabase) : EntryRepository {
         }
         return entities.map { list -> list.map { it.toDomain() } }
     }
-
-    fun observeInstallmentsPaidFrom(month: YearMonth): Flow<List<Entry>> =
-        entryDao.observeInstallmentsPaidFrom(month.atDay(1)).map { list -> list.map { it.toDomain() } }
 
     override suspend fun getById(id: Long): Entry? = entryDao.getById(id)?.toDomain()
 
@@ -61,34 +50,5 @@ class RoomEntryRepository(private val database: AppDatabase) : EntryRepository {
             recurrenceDao.insertSkip(RecurrenceSkipEntity(entry.recurrenceId, entry.scheduledFor))
         }
         entryDao.delete(entry.toEntity())
-    }
-
-    /** Stores a purchase outside a credit card and its installments atomically; returns its id. */
-    suspend fun addInstallmentPurchase(purchase: InstallmentPurchase, paymentDates: List<LocalDate>): Long {
-        require(purchase.creditCardId == null) { "card purchases must use addCardInstallmentPurchase" }
-        return insertPurchase(purchase, paymentDates)
-    }
-
-    /** Stores a card purchase; installments are paid on the due dates of consecutive invoices. */
-    suspend fun addCardInstallmentPurchase(purchase: InstallmentPurchase, card: CreditCard): Long =
-        insertPurchase(purchase, purchase.cardPaymentDates(card))
-
-    private suspend fun insertPurchase(purchase: InstallmentPurchase, paymentDates: List<LocalDate>): Long =
-        database.withTransaction {
-            val purchaseId = purchaseDao.insert(purchase.toEntity())
-            val entries = purchase.copy(id = purchaseId).toEntries(paymentDates)
-            entryDao.insertAll(entries.map { it.toEntity() })
-            purchaseId
-        }
-
-    /** Creates the predicted entries of [recurrence] in [from]..[to] that were not generated yet. */
-    suspend fun generatePredicted(recurrence: Recurrence, from: LocalDate, to: LocalDate): Int {
-        require(recurrence.id != 0L) { "recurrence must be saved first" }
-        return database.withTransaction {
-            val usedSlots = entryDao.scheduledDates(recurrence.id) + recurrenceDao.skippedSlots(recurrence.id)
-            val entries = recurrence.predictedEntriesBetween(from, to, usedSlots.toSet())
-            entryDao.insertAll(entries.map { it.toEntity() })
-            entries.size
-        }
     }
 }

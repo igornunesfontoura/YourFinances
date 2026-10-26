@@ -143,4 +143,15 @@ class RecurrenceScheduleTest {
         )
         assertEquals(listOf(LocalDate.of(2027, 4, 15)), entries.map { it.scheduledFor })
     }
+
+    @Test
+    fun `slots of a former monthly schedule do not use up the yearly occurrence`() {
+        val yearly = recurrence(15, Frequency.YEARLY, startsOn = LocalDate.of(2026, 12, 1))
+        val entries = yearly.predictedEntriesBetween(
+            LocalDate.of(2026, 12, 1),
+            LocalDate.of(2026, 12, 31),
+            alreadyScheduled = setOf(LocalDate.of(2026, 1, 15), LocalDate.of(2026, 10, 15)),
+        )
+        assertEquals(listOf(LocalDate.of(2026, 12, 15)), entries.map { it.scheduledFor })
+    }
 }

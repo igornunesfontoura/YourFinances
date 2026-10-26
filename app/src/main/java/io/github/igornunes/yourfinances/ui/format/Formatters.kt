@@ -3,8 +3,10 @@ package io.github.igornunes.yourfinances.ui.format
 import java.math.BigDecimal
 import java.text.NumberFormat
 import java.time.LocalDate
+import java.time.Month
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.util.Locale
 
 val PT_BR: Locale = Locale.forLanguageTag("pt-BR")
@@ -20,6 +22,9 @@ fun formatCents(cents: Long): String =
 fun formatMonth(month: YearMonth): String = month.format(monthFormatter).capitalized()
 
 fun formatDay(date: LocalDate): String = date.format(dayFormatter).capitalized()
+
+/** "março". */
+fun formatMonthName(month: Month): String = month.getDisplayName(TextStyle.FULL_STANDALONE, PT_BR)
 
 fun formatShortDate(date: LocalDate): String = date.format(shortDateFormatter)
 

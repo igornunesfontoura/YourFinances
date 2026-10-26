@@ -15,7 +15,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -24,12 +28,18 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -49,7 +59,13 @@ import io.github.igornunes.yourfinances.ui.format.label
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun MonthRoute(onAddEntry: () -> Unit, onOpenEntry: (Long) -> Unit, viewModel: MonthViewModel = koinViewModel()) {
+fun MonthRoute(
+    onAddEntry: () -> Unit,
+    onOpenEntry: (Long) -> Unit,
+    onOpenRecurrences: () -> Unit,
+    onOpenInstallments: () -> Unit,
+    viewModel: MonthViewModel = koinViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     MonthScreen(
         state = state,
@@ -58,6 +74,10 @@ fun MonthRoute(onAddEntry: () -> Unit, onOpenEntry: (Long) -> Unit, viewModel: M
         onBasisChange = viewModel::setBasis,
         onAddEntry = onAddEntry,
         onOpenEntry = onOpenEntry,
+        onConfirmEntry = viewModel::confirm,
+        onDismissError = viewModel::dismissError,
+        onOpenRecurrences = onOpenRecurrences,
+        onOpenInstallments = onOpenInstallments,
     )
 }
 
@@ -70,8 +90,23 @@ fun MonthScreen(
     onBasisChange: (DateBasis) -> Unit,
     onAddEntry: () -> Unit,
     onOpenEntry: (Long) -> Unit,
+    onConfirmEntry: (Entry) -> Unit,
+    onDismissError: () -> Unit,
+    onOpenRecurrences: () -> Unit,
+    onOpenInstallments: () -> Unit,
 ) {
+    val snackbar = remember { SnackbarHostState() }
+    val errorMessage = stringResource(R.string.save_failed)
+    LaunchedEffect(state.actionFailed) {
+        if (state.actionFailed) {
+            snackbar.showSnackbar(errorMessage)
+            onDismissError()
+        }
+    }
+    var menuOpen by remember { mutableStateOf(false) }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text(formatMonth(state.month)) },
@@ -83,6 +118,27 @@ fun MonthScreen(
                 actions = {
                     IconButton(onClick = onNextMonth) {
                         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, stringResource(R.string.month_next))
+                    }
+                    Box {
+                        IconButton(onClick = { menuOpen = true }) {
+                            Icon(Icons.Filled.MoreVert, stringResource(R.string.menu_more))
+                        }
+                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.recurrences_title)) },
+                                onClick = {
+                                    menuOpen = false
+                                    onOpenRecurrences()
+                                },
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.installments_title)) },
+                                onClick = {
+                                    menuOpen = false
+                                    onOpenInstallments()
+                                },
+                            )
+                        }
                     }
                 },
             )
@@ -116,7 +172,7 @@ fun MonthScreen(
                     )
                 }
                 items(day.entries, key = { it.id }) { entry ->
-                    EntryRow(entry, onClick = { onOpenEntry(entry.id) })
+                    EntryRow(entry, onClick = { onOpenEntry(entry.id) }, onConfirm = { onConfirmEntry(entry) })
                 }
             }
         }
@@ -168,7 +224,7 @@ private fun TotalLine(label: Int, cents: Long, emphasized: Boolean = false) {
 }
 
 @Composable
-private fun EntryRow(entry: Entry, onClick: () -> Unit) {
+private fun EntryRow(entry: Entry, onClick: () -> Unit, onConfirm: () -> Unit) {
     val title = entry.description.ifBlank { stringResource(entry.type.label) }
     val details = buildList {
         add(stringResource(entry.type.label))
@@ -180,6 +236,15 @@ private fun EntryRow(entry: Entry, onClick: () -> Unit) {
     val isIncome = entry.type == EntryType.INCOME
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
+        leadingContent = if (entry.status == EntryStatus.PREDICTED) {
+            {
+                IconButton(onClick = onConfirm) {
+                    Icon(Icons.Outlined.CheckCircle, stringResource(R.string.entry_confirm))
+                }
+            }
+        } else {
+            null
+        },
         headlineContent = { Text(title) },
         supportingContent = { Text(details) },
         trailingContent = {

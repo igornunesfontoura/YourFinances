@@ -54,3 +54,7 @@ fun committedInstallmentsByMonth(entries: List<Entry>, from: YearMonth): Map<Yea
         .groupBy { YearMonth.from(it.paidOn) }
         .mapValues { (_, installments) -> installments.sumOf { it.amountCents } }
         .toSortedMap()
+
+/** Installment amounts still to be paid after [today], per month (cash basis). */
+fun pendingInstallmentsByMonth(entries: List<Entry>, today: LocalDate): Map<YearMonth, Long> =
+    committedInstallmentsByMonth(entries.filter { it.paidOn.isAfter(today) }, YearMonth.from(today))

@@ -2,6 +2,7 @@ package io.github.igornunes.yourfinances.ui.month
 
 import io.github.igornunes.yourfinances.domain.model.DateBasis
 import io.github.igornunes.yourfinances.domain.model.Entry
+import io.github.igornunes.yourfinances.domain.model.EntryStatus
 import io.github.igornunes.yourfinances.domain.model.EntryType
 import io.github.igornunes.yourfinances.testing.FakeEntryRepository
 import io.github.igornunes.yourfinances.testing.MainDispatcherExtension
@@ -12,6 +13,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.time.Clock
@@ -85,5 +87,29 @@ class MonthViewModelTest {
 
         repository.add(entry(0, EntryType.INCOME, 1000, LocalDate.of(2025, 12, 24)))
         assertEquals(1000L, viewModel.state.value.totals.incomeCents)
+    }
+
+    @Test
+    fun `confirming a predicted entry keeps its values`() = runTest {
+        val predicted = entry(9, EntryType.FIXED_EXPENSE, 4990, LocalDate.of(2026, 3, 20))
+            .copy(status = EntryStatus.PREDICTED, recurrenceId = 1, scheduledFor = LocalDate.of(2026, 3, 20))
+        repository.add(predicted)
+        val viewModel = subscribed()
+        val stored = repository.entries.value.last()
+
+        viewModel.confirm(stored)
+
+        assertEquals(stored.copy(status = EntryStatus.CONFIRMED), repository.entries.value.last())
+        assertFalse(viewModel.state.value.actionFailed)
+    }
+
+    @Test
+    fun `failed confirmation is reported and can be dismissed`() = runTest {
+        val viewModel = subscribed()
+        repository.failWrites = true
+        viewModel.confirm(repository.entries.value.first())
+        assertTrue(viewModel.state.value.actionFailed)
+        viewModel.dismissError()
+        assertFalse(viewModel.state.value.actionFailed)
     }
 }

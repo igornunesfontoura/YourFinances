@@ -33,14 +33,18 @@ fun Recurrence.occurrencesBetween(from: LocalDate, to: LocalDate): List<LocalDat
  * [alreadyScheduled] holds the slots this recurrence already used: those of generated entries and
  * those the user skipped. An occurrence is dropped when its period (the month, or the year for
  * yearly recurrences) already has a slot, so changing [Recurrence.dayOfMonth] never generates a
- * second entry for the same period.
+ * second entry for the same period. For yearly recurrences only slots in the month of
+ * [Recurrence.startsOn] count: slots left by a former monthly schedule do not use up the year.
  */
 fun Recurrence.predictedEntriesBetween(
     from: LocalDate,
     to: LocalDate,
     alreadyScheduled: Set<LocalDate> = emptySet(),
 ): List<Entry> {
-    val usedPeriods = alreadyScheduled.map { periodOf(it) }.toSet()
+    val usedPeriods = alreadyScheduled
+        .filter { frequency == Frequency.MONTHLY || it.month == startsOn.month }
+        .map { periodOf(it) }
+        .toSet()
     return occurrencesBetween(from, to)
         .filterNot { periodOf(it) in usedPeriods }
         .map { date ->

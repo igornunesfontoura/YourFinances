@@ -96,4 +96,17 @@ class InstallmentsTest {
             committedInstallmentsByMonth(first + second + notInstallment, YearMonth.of(2026, 3)),
         )
     }
+
+    @Test
+    fun `pending amount per month leaves out what is already paid`() {
+        val entries = purchase.toEntries(monthlyPaymentDates(LocalDate.of(2026, 2, 10), 3))
+        assertEquals(
+            mapOf(YearMonth.of(2026, 3) to 33333L, YearMonth.of(2026, 4) to 33333L),
+            pendingInstallmentsByMonth(entries, LocalDate.of(2026, 2, 10)),
+        )
+        assertEquals(
+            mapOf(YearMonth.of(2026, 2) to 33334L, YearMonth.of(2026, 3) to 33333L, YearMonth.of(2026, 4) to 33333L),
+            pendingInstallmentsByMonth(entries, LocalDate.of(2026, 2, 9)),
+        )
+    }
 }

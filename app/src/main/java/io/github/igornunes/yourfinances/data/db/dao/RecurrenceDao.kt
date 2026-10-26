@@ -22,6 +22,9 @@ interface RecurrenceDao {
     @Delete
     suspend fun delete(recurrence: RecurrenceEntity)
 
+    @Query("SELECT * FROM recurrences WHERE id = :id")
+    suspend fun getById(id: Long): RecurrenceEntity?
+
     @Query("SELECT * FROM recurrences")
     suspend fun getAll(): List<RecurrenceEntity>
 

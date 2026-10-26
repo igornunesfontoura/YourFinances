@@ -35,9 +35,16 @@ interface EntryDao {
     @Query("SELECT * FROM entries WHERE installment_purchase_id = :purchaseId ORDER BY installment_number")
     fun observeInstallments(purchaseId: Long): Flow<List<EntryEntity>>
 
-    @Query("SELECT * FROM entries WHERE installment_purchase_id IS NOT NULL AND paid_on >= :from ORDER BY paid_on")
-    fun observeInstallmentsPaidFrom(from: LocalDate): Flow<List<EntryEntity>>
-
     @Query("SELECT scheduled_for FROM entries WHERE recurrence_id = :recurrenceId")
     suspend fun scheduledDates(recurrenceId: Long): List<LocalDate>
+
+    @Query("DELETE FROM entries WHERE recurrence_id = :recurrenceId AND status = 'PREDICTED' AND scheduled_for >= :from")
+    suspend fun deletePredictedFrom(recurrenceId: Long, from: LocalDate)
+
+    /** Predicted entries the template no longer produces because of its start or end date. */
+    @Query(
+        "DELETE FROM entries WHERE recurrence_id = :recurrenceId AND status = 'PREDICTED' " +
+            "AND (scheduled_for < :startsOn OR (:endsOn IS NOT NULL AND scheduled_for > :endsOn))",
+    )
+    suspend fun deletePredictedOutside(recurrenceId: Long, startsOn: LocalDate, endsOn: LocalDate?)
 }
