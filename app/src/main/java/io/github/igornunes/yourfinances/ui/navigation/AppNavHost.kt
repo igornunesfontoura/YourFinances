@@ -20,6 +20,8 @@ import io.github.igornunes.yourfinances.ui.installment.InstallmentListRoute
 import io.github.igornunes.yourfinances.ui.month.MonthRoute
 import io.github.igornunes.yourfinances.ui.recurrence.RecurrenceFormRoute
 import io.github.igornunes.yourfinances.ui.recurrence.RecurrenceListRoute
+import io.github.igornunes.yourfinances.ui.savings.PocketFormRoute
+import io.github.igornunes.yourfinances.ui.savings.SavingsRoute
 import io.github.igornunes.yourfinances.ui.settings.SettingsRoute
 import java.time.YearMonth
 
@@ -36,6 +38,8 @@ private const val ENTRY = "entry?$ID={$ID}"
 private const val RECURRENCE = "recurrence?$ID={$ID}"
 private const val CARDS = "cards"
 private const val SETTINGS = "settings"
+private const val SAVINGS = "savings"
+private const val POCKET_FORM = "pocketForm?$ID={$ID}"
 private const val CARD = "card/{$ID}"
 private const val CARD_FORM = "cardForm?$ID={$ID}"
 
@@ -54,6 +58,8 @@ private fun recurrenceRoute(id: Long? = null) = "recurrence?$ID=${id ?: NO_ID}"
 private fun cardRoute(id: Long) = "card/$id"
 
 private fun cardFormRoute(id: Long? = null) = "cardForm?$ID=${id ?: NO_ID}"
+
+private fun pocketFormRoute(id: Long? = null) = "pocketForm?$ID=${id ?: NO_ID}"
 
 private val idArgument = listOf(navArgument(ID) { type = NavType.LongType; defaultValue = NO_ID })
 
@@ -85,8 +91,19 @@ fun AppNavHost(onDisableLock: () -> Unit) {
                 onOpenRecurrences = { navController.navigateFrom(entry, RECURRENCES) },
                 onOpenInstallments = { navController.navigateFrom(entry, INSTALLMENTS) },
                 onOpenCards = { navController.navigateFrom(entry, CARDS) },
+                onOpenSavings = { navController.navigateFrom(entry, SAVINGS) },
                 onOpenSettings = { navController.navigateFrom(entry, SETTINGS) },
             )
+        }
+        composable(SAVINGS) { entry ->
+            SavingsRoute(
+                onBack = { navController.closeFrom(entry) },
+                onAddPocket = { navController.navigateFrom(entry, pocketFormRoute()) },
+                onOpenPocket = { id -> navController.navigateFrom(entry, pocketFormRoute(id)) },
+            )
+        }
+        composable(POCKET_FORM, arguments = idArgument) { entry ->
+            PocketFormRoute(pocketId = entry.optionalId(), onDone = { navController.closeFrom(entry) })
         }
         composable(SETTINGS) { entry ->
             SettingsRoute(onBack = { navController.closeFrom(entry) }, onDisableLock = onDisableLock)

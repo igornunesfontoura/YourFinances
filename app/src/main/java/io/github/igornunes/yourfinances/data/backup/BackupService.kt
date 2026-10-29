@@ -50,6 +50,7 @@ class RoomBackupService(private val dao: () -> BackupDao, private val clock: Clo
                 entries = tables.entries.map { it.toDomain() },
                 cardNames = tables.creditCards.associate { it.id to it.name },
                 categoryNames = tables.categories.associate { it.id to it.name },
+                pocketNames = tables.savingsPockets.associate { it.id to it.name },
             ).toByteArray(Charsets.UTF_8)
         }
     }

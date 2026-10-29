@@ -4,16 +4,15 @@ import io.github.igornunes.yourfinances.data.db.entity.CategoryEntity
 import io.github.igornunes.yourfinances.data.db.entity.CreditCardEntity
 import io.github.igornunes.yourfinances.data.db.entity.EntryEntity
 import io.github.igornunes.yourfinances.data.db.entity.InstallmentPurchaseEntity
-import io.github.igornunes.yourfinances.data.db.entity.InvestmentEntity
 import io.github.igornunes.yourfinances.data.db.entity.InvestmentGoalEntity
 import io.github.igornunes.yourfinances.data.db.entity.InvoicePaymentEntity
 import io.github.igornunes.yourfinances.data.db.entity.RecurrenceEntity
 import io.github.igornunes.yourfinances.data.db.entity.RecurrenceSkipEntity
+import io.github.igornunes.yourfinances.data.db.entity.SavingsPocketEntity
 import io.github.igornunes.yourfinances.data.db.entity.toDomain
 import io.github.igornunes.yourfinances.domain.model.EntryStatus
 import io.github.igornunes.yourfinances.domain.model.EntryType
 import io.github.igornunes.yourfinances.domain.model.Frequency
-import io.github.igornunes.yourfinances.domain.model.Indexer
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -22,12 +21,14 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
-import java.math.BigDecimal
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import java.time.DateTimeException
 import java.time.LocalDate
 import java.time.YearMonth
 
-/** Every table the user owns, as stored in the database. The BCB rate cache is left out. */
+/** Every table the user owns, as stored in the database. */
 data class BackupTables(
     val categories: List<CategoryEntity>,
     val creditCards: List<CreditCardEntity>,
@@ -36,18 +37,23 @@ data class BackupTables(
     val installmentPurchases: List<InstallmentPurchaseEntity>,
     val entries: List<EntryEntity>,
     val invoicePayments: List<InvoicePaymentEntity>,
-    val investments: List<InvestmentEntity>,
     val investmentGoals: List<InvestmentGoalEntity>,
+    val savingsPockets: List<SavingsPocketEntity>,
 )
 
 /**
  * The decrypted backup content: versioned JSON, independent of the Room schema. Dates are ISO
- * strings, money is in cents, rates are decimal strings.
+ * strings and money is in cents.
+ *
+ * Versions: 1 had an (always empty) `investments` list; 2 drops it and adds savings pockets.
  */
 object BackupFormat {
-    const val VERSION = 1
+    const val VERSION = 2
 
     private val json = Json { encodeDefaults = true }
+
+    /** Version 1 only differs by the `investments` list, which no version ever filled. */
+    private val jsonV1 = Json { ignoreUnknownKeys = true }
 
     fun encode(tables: BackupTables, exportedOn: LocalDate): ByteArray =
         json.encodeToString(BackupSnapshot.serializer(), tables.toSnapshot(exportedOn)).toByteArray(Charsets.UTF_8)
@@ -61,7 +67,14 @@ object BackupFormat {
      */
     fun decode(bytes: ByteArray): BackupTables {
         val snapshot = try {
-            json.decodeFromString(BackupSnapshot.serializer(), bytes.toString(Charsets.UTF_8))
+            val text = bytes.toString(Charsets.UTF_8)
+            val format = json.parseToJsonElement(text).jsonObject["format"]?.jsonPrimitive?.int
+            val parser = when (format) {
+                VERSION -> json
+                1 -> jsonV1
+                else -> throw BackupInvalidException()
+            }
+            parser.decodeFromString(BackupSnapshot.serializer(), text)
         } catch (e: SerializationException) {
             throw BackupInvalidException(e)
         } catch (e: IllegalArgumentException) {
@@ -69,7 +82,7 @@ object BackupFormat {
         } catch (e: DateTimeException) {
             throw BackupInvalidException(e)
         }
-        if (snapshot.format != VERSION) throw BackupInvalidException()
+
         return try {
             snapshot.toTables().also { it.validate() }
         } catch (e: IllegalArgumentException) {
@@ -78,12 +91,17 @@ object BackupFormat {
     }
 
     private fun BackupTables.validate() {
+        // Pocket references are checked here so a bad file reads as invalid, not as a failed restore.
+        val pocketIds = savingsPockets.map { it.id }.toSet()
+        require((entries.mapNotNull { it.savingsPocketId } + recurrences.mapNotNull { it.savingsPocketId }).all { it in pocketIds }) {
+            "unknown savings pocket"
+        }
         installmentPurchases.forEach { it.toDomain() }
         recurrences.forEach { it.toDomain() }
         creditCards.forEach { it.toDomain() }
         entries.forEach { it.toDomain() }
-        investments.forEach { it.toDomain() }
         investmentGoals.forEach { it.toDomain() }
+        savingsPockets.forEach { it.toDomain() }
     }
 }
 
@@ -101,8 +119,8 @@ private data class BackupSnapshot(
     val installmentPurchases: List<InstallmentPurchaseRow>,
     val entries: List<EntryRow>,
     val invoicePayments: List<InvoicePaymentRow>,
-    val investments: List<InvestmentRow>,
     val investmentGoals: List<InvestmentGoalRow>,
+    val savingsPockets: List<SavingsPocketRow> = emptyList(),
 )
 
 @Serializable
@@ -122,6 +140,7 @@ private data class RecurrenceRow(
     @Serializable(LocalDateSerializer::class) val startsOn: LocalDate,
     @Serializable(LocalDateSerializer::class) val endsOn: LocalDate?,
     val categoryId: Long?,
+    val savingsPocketId: Long? = null,
 )
 
 @Serializable
@@ -155,6 +174,7 @@ private data class EntryRow(
     val installmentPurchaseId: Long?,
     val installmentNumber: Int?,
     val installmentCount: Int?,
+    val savingsPocketId: Long? = null,
 )
 
 @Serializable
@@ -165,20 +185,13 @@ private data class InvoicePaymentRow(
 )
 
 @Serializable
-private data class InvestmentRow(
-    val id: Long,
-    val product: String,
-    val indexer: Indexer,
-    @Serializable(BigDecimalSerializer::class) val rate: BigDecimal,
-    @Serializable(LocalDateSerializer::class) val investedOn: LocalDate,
-    val principalCents: Long,
-)
-
-@Serializable
 private data class InvestmentGoalRow(
     @Serializable(YearMonthSerializer::class) val startsIn: YearMonth,
     val amountCents: Long,
 )
+
+@Serializable
+private data class SavingsPocketRow(val id: Long, val name: String, val targetCents: Long?)
 
 private fun BackupTables.toSnapshot(exportedOn: LocalDate) = BackupSnapshot(
     format = BackupFormat.VERSION,
@@ -186,7 +199,10 @@ private fun BackupTables.toSnapshot(exportedOn: LocalDate) = BackupSnapshot(
     categories = categories.map { CategoryRow(it.id, it.name, it.type) },
     creditCards = creditCards.map { CreditCardRow(it.id, it.name, it.closingDay, it.dueDay) },
     recurrences = recurrences.map {
-        RecurrenceRow(it.id, it.type, it.amountCents, it.description, it.frequency, it.dayOfMonth, it.startsOn, it.endsOn, it.categoryId)
+        RecurrenceRow(
+            it.id, it.type, it.amountCents, it.description, it.frequency, it.dayOfMonth, it.startsOn, it.endsOn,
+            it.categoryId, it.savingsPocketId,
+        )
     },
     recurrenceSkips = recurrenceSkips.map { RecurrenceSkipRow(it.recurrenceId, it.slot) },
     installmentPurchases = installmentPurchases.map {
@@ -198,19 +214,22 @@ private fun BackupTables.toSnapshot(exportedOn: LocalDate) = BackupSnapshot(
         EntryRow(
             it.id, it.type, it.amountCents, it.description, it.occurredOn, it.paidOn, it.status, it.categoryId,
             it.creditCardId, it.recurrenceId, it.scheduledFor, it.installmentPurchaseId, it.installmentNumber,
-            it.installmentCount,
+            it.installmentCount, it.savingsPocketId,
         )
     },
     invoicePayments = invoicePayments.map { InvoicePaymentRow(it.cardId, it.dueDate, it.paidOn) },
-    investments = investments.map { InvestmentRow(it.id, it.product, it.indexer, it.rate, it.investedOn, it.principalCents) },
     investmentGoals = investmentGoals.map { InvestmentGoalRow(it.startsIn, it.amountCents) },
+    savingsPockets = savingsPockets.map { SavingsPocketRow(it.id, it.name, it.targetCents) },
 )
 
 private fun BackupSnapshot.toTables() = BackupTables(
     categories = categories.map { CategoryEntity(it.id, it.name, it.type) },
     creditCards = creditCards.map { CreditCardEntity(it.id, it.name, it.closingDay, it.dueDay) },
     recurrences = recurrences.map {
-        RecurrenceEntity(it.id, it.type, it.amountCents, it.description, it.frequency, it.dayOfMonth, it.startsOn, it.endsOn, it.categoryId)
+        RecurrenceEntity(
+            it.id, it.type, it.amountCents, it.description, it.frequency, it.dayOfMonth, it.startsOn, it.endsOn,
+            it.categoryId, it.savingsPocketId,
+        )
     },
     recurrenceSkips = recurrenceSkips.map { RecurrenceSkipEntity(it.recurrenceId, it.slot) },
     installmentPurchases = installmentPurchases.map {
@@ -222,12 +241,12 @@ private fun BackupSnapshot.toTables() = BackupTables(
         EntryEntity(
             it.id, it.type, it.amountCents, it.description, it.occurredOn, it.paidOn, it.status, it.categoryId,
             it.creditCardId, it.recurrenceId, it.scheduledFor, it.installmentPurchaseId, it.installmentNumber,
-            it.installmentCount,
+            it.installmentCount, it.savingsPocketId,
         )
     },
     invoicePayments = invoicePayments.map { InvoicePaymentEntity(it.cardId, it.dueDate, it.paidOn) },
-    investments = investments.map { InvestmentEntity(it.id, it.product, it.indexer, it.rate, it.investedOn, it.principalCents) },
     investmentGoals = investmentGoals.map { InvestmentGoalEntity(it.startsIn, it.amountCents) },
+    savingsPockets = savingsPockets.map { SavingsPocketEntity(it.id, it.name, it.targetCents) },
 )
 
 private abstract class StringSerializer<T : Any>(name: String, private val parse: (String) -> T) : KSerializer<T> {
@@ -243,12 +262,3 @@ private object LocalDateSerializer : StringSerializer<LocalDate>("LocalDate", { 
 
 /** "2026-03". */
 private object YearMonthSerializer : StringSerializer<YearMonth>("YearMonth", { YearMonth.parse(it) })
-
-/** Plain decimal string, never scientific notation, so no precision is lost. */
-private object BigDecimalSerializer : KSerializer<BigDecimal> {
-    override val descriptor = PrimitiveSerialDescriptor("BigDecimal", PrimitiveKind.STRING)
-
-    override fun serialize(encoder: Encoder, value: BigDecimal) = encoder.encodeString(value.toPlainString())
-
-    override fun deserialize(decoder: Decoder): BigDecimal = BigDecimal(decoder.decodeString())
-}

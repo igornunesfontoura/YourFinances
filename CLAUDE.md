@@ -1,12 +1,12 @@
 # Your Finances
 
-App Android pessoal de controle financeiro: entradas, saídas fixas, saídas flexíveis e investimentos. Local-first, privado e open source (GPL-3.0). Uso inicial pessoal, mas o código deve estar pronto para publicação no F-Droid.
+App Android pessoal de controle financeiro: entradas, saídas fixas, saídas flexíveis e dinheiro guardado. Local-first, privado e open source (GPL-3.0). Uso inicial pessoal, mas o código deve estar pronto para publicação no F-Droid.
 
 ## Princípios inegociáveis
 
 - **Local-first:** todos os dados ficam no aparelho. Não existe backend, conta de usuário nem nuvem.
 - **Privacidade:** zero telemetria, analytics ou crash reporting. Nada de Firebase, Google Play Services, Crashlytics ou SDKs de terceiros que façam rede.
-- **Única exceção de rede:** a API pública SGS do Banco Central, sem nenhum dado pessoal na requisição. Deve poder ser desligada nas configurações, e o app precisa funcionar 100% offline.
+- **Sem rede:** o app não faz nenhuma requisição de rede e não pede a permissão `INTERNET`. (A ideia de estimar rendimentos pela API do Banco Central foi descartada: cada banco e produto rende diferente, e o número precisaria ser corrigido à mão.)
 - **Compatível com F-Droid:** apenas dependências open source, builds reproduzíveis, nenhum blob proprietário.
 - **Os dados são do usuário:** sempre deve existir exportação em CSV aberto, além do backup criptografado.
 
@@ -16,8 +16,8 @@ App Android pessoal de controle financeiro: entradas, saídas fixas, saídas fle
 - Single-Activity com Navigation Compose
 - Room sobre SQLCipher (`net.zetetic:sqlcipher-android`); chave do banco protegida pelo Android Keystore
 - Koin para injeção de dependência
-- WorkManager para tarefas em segundo plano (recorrências, atualização de taxas)
-- Ktor Client (ou OkHttp) somente para a API do BCB
+- WorkManager para tarefas em segundo plano (previsão de recorrências)
+- kotlinx.serialization (JSON) para o conteúdo do backup
 - `androidx.biometric` para bloqueio; `FLAG_SECURE` em todas as telas
 - Storage Access Framework para backup/exportação (sem permissão de armazenamento)
 - Testes: JUnit 5 + kotlinx-coroutines-test; Turbine para Flows
@@ -28,7 +28,7 @@ Antes de adicionar qualquer dependência nova, confirme que é open source, sem 
 
 ```
 app/
-  data/      Room (entities, DAOs), SQLCipher, cliente da API do BCB, repositórios
+  data/      Room (entities, DAOs), SQLCipher, backup, repositórios
   domain/    Regras financeiras em Kotlin puro (SEM imports de Android)
   ui/        Telas Compose e ViewModels (MVVM, estado exposto via StateFlow)
 ```
@@ -48,7 +48,7 @@ app/
 - Usar `java.time` (`LocalDate`, `YearMonth`). Nada de `java.util.Date`.
 
 ### Lançamentos
-Tipos: `INCOME` (salário, renda extra), `FIXED_EXPENSE` (assinaturas, contas, parcelas), `FLEXIBLE_EXPENSE` (jantar, roupa, cinema), `INVESTMENT` (aporte).
+Tipos: `INCOME` (salário, renda extra), `FIXED_EXPENSE` (assinaturas, contas, parcelas), `FLEXIBLE_EXPENSE` (jantar, roupa, cinema), `INVESTMENT` (aporte), `WITHDRAWAL` (resgate do que foi guardado).
 
 Cada lançamento tem duas datas:
 - `occurredOn` (competência): quando a compra/evento aconteceu.
@@ -73,24 +73,20 @@ Relatórios precisam deixar claro se usam competência ou caixa.
 ### "Quanto ainda posso gastar" (tela principal)
 ```
 disponível = entradas do mês
+           + resgates confirmados do mês
            − saídas fixas do mês (previstas + confirmadas)
-           − meta de investimento do mês
+           − o maior entre a meta de investimento e os aportes do mês (previstos + confirmados)
            − saídas flexíveis já registradas
 ```
 Este é o número mais importante do app. Qualquer mudança nessa regra exige teste.
+A meta reserva o dinheiro antes mesmo do aporte; aportar além dela reserva mais. Resgates previstos só contam depois de confirmados. A tela principal usa competência e compara "meta" com "guardado no mês".
 
-### Investimentos
-- Cadastro manual: produto, indexador (`CDI`, `SELIC`, `IPCA`, `PREFIXADO`), taxa, data e valor do aporte.
-- Rendimento estimado com séries da API SGS do BCB:
-  - CDI diário: série 12
-  - Selic diária: série 11
-  - IPCA mensal: série 433
-  - Endpoint: `https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados?formato=json&dataInicial=dd/MM/yyyy&dataFinal=dd/MM/yyyy`
-  - Verificar na documentação do BCB os limites de período por requisição.
-- Pós-fixado em % do CDI: fator acumulado = produto, dia útil a dia útil, de `(1 + taxaDia/100 × percentual)`.
-- Taxas ficam em cache local (Room). Sem rede, usar o cache e indicar a data da última atualização.
-- IR estimado pela tabela regressiva de renda fixa. Sempre rotular como **estimativa**.
-- Cálculos de rendimento usam `BigDecimal` internamente e só convertem para centavos (`Long`) no resultado.
+### Dinheiro guardado
+- O app registra só o que foi guardado, nunca rendimentos: eles dependem de cada banco e produto. O saldo real se confere no banco.
+- Aportes (`INVESTMENT`) e resgates (`WITHDRAWAL`), inclusive recorrentes, podem indicar uma caixinha (`SavingsPocket`: nome e objetivo opcional) ou nenhuma ("sem caixinha").
+- Guardado = aportes − resgates, contando só lançamentos `CONFIRMED` com data até hoje. Pode ficar negativo se mais foi resgatado do que registrado.
+- A meta mensal de investimento vale a partir de um mês até ser substituída; mudá-la não altera os meses anteriores.
+- Caixinha com aportes, resgates ou recorrências não pode ser excluída.
 
 ## Segurança
 
@@ -119,7 +115,7 @@ Este é o número mais importante do app. Qualquer mudança nessa regra exige te
 
 ## Testes
 
-- Toda regra do `domain` precisa de teste unitário, especialmente: divisão de parcelas, ciclo de fatura (compra antes/depois do fechamento, virada de mês e de ano), geração de recorrências (dia 31 em meses curtos, fevereiro), cálculo do "disponível" e rendimento por CDI.
+- Toda regra do `domain` precisa de teste unitário, especialmente: divisão de parcelas, ciclo de fatura (compra antes/depois do fechamento, virada de mês e de ano), geração de recorrências (dia 31 em meses curtos, fevereiro), cálculo do "disponível" e do guardado por caixinha.
 - Testes de DAO com Room em memória.
 - Ao corrigir bug financeiro, primeiro escreva um teste que reproduz o erro.
 
@@ -131,7 +127,7 @@ Este é o número mais importante do app. Qualquer mudança nessa regra exige te
 4. [x] Cartão de crédito e faturas
 5. [x] Tela "quanto ainda posso gastar"
 6. [x] SQLCipher, bloqueio biométrico, backup criptografado e exportação CSV
-7. [ ] Investimentos com taxas do BCB
+7. [x] Dinheiro guardado: caixinhas, aportes e resgates (sem rendimentos)
 8. [ ] Orçamento por categoria, gráficos e painel de assinaturas
 9. [ ] Importação de extrato (OFX/CSV)
 

@@ -16,6 +16,7 @@ val EntryType.label: Int
         EntryType.FIXED_EXPENSE -> R.string.entry_type_fixed_expense
         EntryType.FLEXIBLE_EXPENSE -> R.string.entry_type_flexible_expense
         EntryType.INVESTMENT -> R.string.entry_type_investment
+        EntryType.WITHDRAWAL -> R.string.entry_type_withdrawal
     }
 
 @get:StringRes

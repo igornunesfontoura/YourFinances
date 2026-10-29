@@ -37,6 +37,14 @@ class MonthTotalsTest {
     }
 
     @Test
+    fun `withdrawals add to the balance`() {
+        val totals = monthTotals(listOf(entry(EntryType.INVESTMENT, 50000), entry(EntryType.WITHDRAWAL, 20000)))
+        assertEquals(50000L, totals.investmentCents)
+        assertEquals(20000L, totals.withdrawalsCents)
+        assertEquals(-30000L, totals.balanceCents)
+    }
+
+    @Test
     fun `no entries means zero`() {
         assertEquals(MonthTotals(), monthTotals(emptyList()))
         assertEquals(0L, MonthTotals().balanceCents)

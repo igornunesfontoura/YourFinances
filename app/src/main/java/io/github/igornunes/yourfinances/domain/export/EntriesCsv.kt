@@ -1,7 +1,6 @@
 package io.github.igornunes.yourfinances.domain.export
 
 import io.github.igornunes.yourfinances.domain.model.Entry
-import io.github.igornunes.yourfinances.domain.model.EntryType
 import java.math.BigDecimal
 
 /** Stable, machine-friendly column names: the file is meant for spreadsheets and scripts. */
@@ -16,14 +15,20 @@ val ENTRIES_CSV_HEADER = listOf(
     "category",
     "installment_number",
     "installment_count",
+    "savings_pocket",
 )
 
 /**
  * RFC 4180 CSV of [entries], oldest first: ISO dates, `.` as the decimal separator and CRLF line
- * ends. `amount` is signed as a cash flow (income positive, everything else negative), so a
+ * ends. `amount` is signed as a cash flow (income and withdrawals positive, the rest negative), so a
  * spreadsheet sum gives the balance; `type` keeps the full meaning.
  */
-fun entriesCsv(entries: List<Entry>, cardNames: Map<Long, String>, categoryNames: Map<Long, String>): String {
+fun entriesCsv(
+    entries: List<Entry>,
+    cardNames: Map<Long, String>,
+    categoryNames: Map<Long, String>,
+    pocketNames: Map<Long, String> = emptyMap(),
+): String {
     val rows = entries.sortedWith(compareBy({ it.occurredOn }, { it.id })).map { entry ->
         listOf(
             entry.occurredOn.toString(),
@@ -36,6 +41,7 @@ fun entriesCsv(entries: List<Entry>, cardNames: Map<Long, String>, categoryNames
             textField(entry.categoryId?.let { categoryNames[it] }.orEmpty()),
             entry.installmentNumber?.toString().orEmpty(),
             entry.installmentCount?.toString().orEmpty(),
+            textField(entry.savingsPocketId?.let { pocketNames[it] }.orEmpty()),
         )
     }
     return (listOf(ENTRIES_CSV_HEADER) + rows).joinToString(separator = "") { row ->
@@ -44,7 +50,7 @@ fun entriesCsv(entries: List<Entry>, cardNames: Map<Long, String>, categoryNames
 }
 
 private fun signedAmount(entry: Entry): String {
-    val cents = if (entry.type == EntryType.INCOME) entry.amountCents else -entry.amountCents
+    val cents = if (entry.type.isInflow) entry.amountCents else -entry.amountCents
     return BigDecimal.valueOf(cents, 2).toPlainString()
 }
 

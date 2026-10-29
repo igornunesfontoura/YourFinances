@@ -67,6 +67,8 @@ class HomeViewModelTest {
         assertTrue(state.hasGoal)
         assertEquals(24000L, state.available.flexibleExpensesCents)
         assertEquals(500000L - 150000L - 100000L - 24000L, state.available.availableCents)
+        // The contribution is compared with the goal, not subtracted again.
+        assertEquals(70000L, state.savedCents)
     }
 
     @Test
@@ -88,8 +90,9 @@ class HomeViewModelTest {
         entries.add(entry(0, EntryType.FLEXIBLE_EXPENSE, 1000, LocalDate.of(2026, 3, 20)))
         assertEquals(225000L, viewModel.state.value.available.availableCents)
 
+        // A goal below what was already contributed (70000) reserves the contributions.
         goals.set(InvestmentGoal(YearMonth.of(2026, 3), 50000))
-        assertEquals(275000L, viewModel.state.value.available.availableCents)
+        assertEquals(500000L - 150000L - 70000L - 25000L, viewModel.state.value.available.availableCents)
     }
 
     @Test
@@ -98,7 +101,8 @@ class HomeViewModelTest {
         assertTrue(viewModel.state.value.loading)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
         assertFalse(viewModel.state.value.hasGoal)
-        assertEquals(500000L - 150000L - 24000L, viewModel.state.value.available.availableCents)
+        // Without a goal, the contribution itself is what the month set aside.
+        assertEquals(500000L - 150000L - 70000L - 24000L, viewModel.state.value.available.availableCents)
     }
 
     @Test
@@ -114,5 +118,14 @@ class HomeViewModelTest {
         assertEquals(YearMonth.of(2027, 4), viewModel.selectedMonth)
         assertEquals(YearMonth.of(2027, 4), viewModel.state.value.month)
         assertEquals(100000L, viewModel.state.value.available.investmentGoalCents)
+    }
+
+    @Test
+    fun `saved this month only counts what already happened`() = runTest {
+        val viewModel = subscribed()
+        entries.add(entry(0, EntryType.INVESTMENT, 30000, LocalDate.of(2026, 3, 20)))
+        assertEquals(70000L, viewModel.state.value.savedCents)
+        // Still reserved in the month's budget, though: 70000 + 30000 = the 100000 goal.
+        assertEquals(500000L - 150000L - 100000L - 24000L, viewModel.state.value.available.availableCents)
     }
 }

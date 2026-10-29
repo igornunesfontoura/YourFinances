@@ -1,10 +1,13 @@
 package io.github.igornunes.yourfinances.ui.recurrence
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import io.github.igornunes.yourfinances.data.repository.RecurrenceRepository
+import io.github.igornunes.yourfinances.data.repository.SavingsRepository
 import io.github.igornunes.yourfinances.domain.model.EntryType
 import io.github.igornunes.yourfinances.domain.model.Frequency
 import io.github.igornunes.yourfinances.domain.model.Recurrence
+import io.github.igornunes.yourfinances.domain.model.SavingsPocket
 import io.github.igornunes.yourfinances.domain.money.centsFromAmountDigits
 import io.github.igornunes.yourfinances.domain.money.normalizeAmountDigits
 import io.github.igornunes.yourfinances.domain.recurrence.predictionWindow
@@ -15,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
 
@@ -28,8 +32,11 @@ data class RecurrenceFormUiState(
     val dayText: String = today.dayOfMonth.toString(),
     val startsOn: LocalDate = today,
     val endsOn: LocalDate? = null,
+    val pockets: List<SavingsPocket> = emptyList(),
+    val pocketId: Long? = null,
     val status: FormStatus = FormStatus(),
 ) {
+    val showsPocket: Boolean get() = type.movesSavings && pockets.isNotEmpty()
     val amountCents: Long get() = centsFromAmountDigits(amountDigits)
     val dayOfMonth: Int? get() = dayText.toIntOrNull()?.takeIf { it in 1..31 }
     val endsBeforeStart: Boolean get() = endsOn != null && endsOn.isBefore(startsOn)
@@ -42,6 +49,7 @@ class RecurrenceFormViewModel(
     recurrenceId: Long?,
     private val recurrences: RecurrenceRepository,
     private val clock: Clock,
+    savings: SavingsRepository,
 ) : ViewModel() {
     private var original: Recurrence? = null
 
@@ -53,6 +61,12 @@ class RecurrenceFormViewModel(
     }
 
     init {
+        viewModelScope.launch {
+            savings.observePockets().collect { list ->
+                // A pocket deleted meanwhile cannot be saved into.
+                _state.update { state -> state.copy(pockets = list, pocketId = state.pocketId.takeIf { id -> list.any { it.id == id } }) }
+            }
+        }
         if (recurrenceId != null) {
             load(updateStatus, read = { recurrences.getById(recurrenceId) }) { recurrence ->
                 original = recurrence
@@ -65,6 +79,7 @@ class RecurrenceFormViewModel(
                         dayText = recurrence.dayOfMonth.toString(),
                         startsOn = recurrence.startsOn,
                         endsOn = recurrence.endsOn,
+                        pocketId = recurrence.savingsPocketId,
                     )
                 }
             }
@@ -73,7 +88,11 @@ class RecurrenceFormViewModel(
 
     fun onAmountChange(input: String) = _state.update { it.copy(amountDigits = normalizeAmountDigits(input)) }
 
-    fun onTypeChange(type: EntryType) = _state.update { it.copy(type = type) }
+    fun onTypeChange(type: EntryType) = _state.update {
+        it.copy(type = type, pocketId = it.pocketId.takeIf { type.movesSavings })
+    }
+
+    fun onPocketChange(pocketId: Long?) = _state.update { it.copy(pocketId = pocketId) }
 
     fun onDescriptionChange(description: String) = _state.update { it.copy(description = description) }
 
@@ -99,6 +118,7 @@ class RecurrenceFormViewModel(
             startsOn = current.startsOn,
             endsOn = current.endsOn,
             categoryId = original?.categoryId,
+            savingsPocketId = current.pocketId.takeIf { current.type.movesSavings },
         )
         val window = predictionWindow(LocalDate.now(clock))
         persist(updateStatus) {

@@ -6,6 +6,7 @@ import io.github.igornunes.yourfinances.data.repository.CreditCardRepository
 import io.github.igornunes.yourfinances.data.repository.EntryRepository
 import io.github.igornunes.yourfinances.data.repository.InstallmentRepository
 import io.github.igornunes.yourfinances.data.repository.RecurrenceRepository
+import io.github.igornunes.yourfinances.data.repository.SavingsRepository
 import io.github.igornunes.yourfinances.domain.card.paymentDateFor
 import io.github.igornunes.yourfinances.domain.entry.deletesWholePurchase
 import io.github.igornunes.yourfinances.domain.entry.edited
@@ -14,6 +15,7 @@ import io.github.igornunes.yourfinances.domain.entry.newEntry
 import io.github.igornunes.yourfinances.domain.model.CreditCard
 import io.github.igornunes.yourfinances.domain.model.Entry
 import io.github.igornunes.yourfinances.domain.model.EntryType
+import io.github.igornunes.yourfinances.domain.model.SavingsPocket
 import io.github.igornunes.yourfinances.domain.money.centsFromAmountDigits
 import io.github.igornunes.yourfinances.domain.money.normalizeAmountDigits
 import io.github.igornunes.yourfinances.domain.recurrence.predictionWindow
@@ -41,11 +43,14 @@ data class EntryFormUiState(
     val deletesWholePurchase: Boolean = false,
     val cards: List<CreditCard> = emptyList(),
     val cardId: Long? = null,
+    val pockets: List<SavingsPocket> = emptyList(),
+    val pocketId: Long? = null,
     val status: FormStatus = FormStatus(),
 ) {
     val amountCents: Long get() = centsFromAmountDigits(amountDigits)
     val card: CreditCard? get() = cards.find { it.id == cardId }
     val showsPayment: Boolean get() = canEditValues && type.canUseCard && cards.isNotEmpty()
+    val showsPocket: Boolean get() = canEditValues && type.movesSavings && pockets.isNotEmpty()
 
     /** Due date of the invoice the entry goes into, when paid with a card. */
     val cardDueDate: LocalDate? get() = card?.paymentDateFor(occurredOn)
@@ -66,6 +71,7 @@ class EntryFormViewModel(
     private val installments: InstallmentRepository,
     cards: CreditCardRepository,
     private val clock: Clock,
+    savings: SavingsRepository,
 ) : ViewModel() {
     private var original: Entry? = null
 
@@ -80,6 +86,12 @@ class EntryFormViewModel(
 
     init {
         viewModelScope.launch { cards.observeAll().collect { list -> _state.update { it.copy(cards = list) } } }
+        viewModelScope.launch {
+            savings.observePockets().collect { list ->
+                // A pocket deleted meanwhile cannot be saved into.
+                _state.update { state -> state.copy(pockets = list, pocketId = state.pocketId.takeIf { id -> list.any { it.id == id } }) }
+            }
+        }
         if (entryId != null) {
             load(updateStatus, read = { entries.getById(entryId) }) { entry ->
                 original = entry
@@ -93,6 +105,7 @@ class EntryFormViewModel(
                         isRecurring = entry.recurrenceId != null && entry.isQuickEditable,
                         deletesWholePurchase = entry.deletesWholePurchase,
                         cardId = entry.creditCardId,
+                        pocketId = entry.savingsPocketId,
                     )
                 }
             }
@@ -102,10 +115,16 @@ class EntryFormViewModel(
     fun onAmountChange(input: String) = _state.update { it.copy(amountDigits = normalizeAmountDigits(input)) }
 
     fun onTypeChange(type: EntryType) = _state.update {
-        it.copy(type = type, cardId = it.cardId.takeIf { type.canUseCard })
+        it.copy(
+            type = type,
+            cardId = it.cardId.takeIf { type.canUseCard },
+            pocketId = it.pocketId.takeIf { type.movesSavings },
+        )
     }
 
     fun onCardChange(cardId: Long?) = _state.update { it.copy(cardId = cardId) }
+
+    fun onPocketChange(pocketId: Long?) = _state.update { it.copy(pocketId = pocketId) }
 
     fun onDescriptionChange(description: String) = _state.update { it.copy(description = description) }
 
@@ -119,10 +138,14 @@ class EntryFormViewModel(
         val existing = original
         persist(updateStatus) {
             if (existing == null) {
-                entries.add(newEntry(current.type, current.amountCents, current.description, current.occurredOn, current.card))
+                entries.add(
+                    newEntry(current.type, current.amountCents, current.description, current.occurredOn, current.card, current.pocketId),
+                )
                 return@persist
             }
-            val edited = existing.edited(current.type, current.amountCents, current.description, current.occurredOn, current.card)
+            val edited = existing.edited(
+                current.type, current.amountCents, current.description, current.occurredOn, current.card, current.pocketId,
+            )
             if (current.canApplyToUpcoming && current.applyToUpcoming) {
                 recurrences.applyToUpcoming(edited, predictionWindow(LocalDate.now(clock)))
             } else {

@@ -24,6 +24,7 @@ import io.github.igornunes.yourfinances.R
 import io.github.igornunes.yourfinances.domain.model.EntryType
 import io.github.igornunes.yourfinances.domain.model.Frequency
 import io.github.igornunes.yourfinances.ui.components.AmountField
+import io.github.igornunes.yourfinances.ui.components.ChoiceChips
 import io.github.igornunes.yourfinances.ui.components.ConfirmDialog
 import io.github.igornunes.yourfinances.ui.components.DateChip
 import io.github.igornunes.yourfinances.ui.components.ErrorText
@@ -61,6 +62,9 @@ fun RecurrenceFormRoute(
     ) {
         AmountField(state.amountDigits, viewModel::onAmountChange, R.string.entry_amount, enabled, onDone = viewModel::save)
         SegmentedSelector(EntryType.entries, state.type, { it.label }, viewModel::onTypeChange, enabled)
+        if (state.showsPocket) {
+            ChoiceChips(R.string.pocket_none, state.pockets.map { it.id to it.name }, state.pocketId, viewModel::onPocketChange, enabled)
+        }
         OutlinedTextField(
             value = state.description,
             onValueChange = viewModel::onDescriptionChange,

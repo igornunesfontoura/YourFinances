@@ -54,6 +54,7 @@ fun HomeRoute(
     onOpenRecurrences: () -> Unit,
     onOpenInstallments: () -> Unit,
     onOpenCards: () -> Unit,
+    onOpenSavings: () -> Unit,
     onOpenSettings: () -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
@@ -68,6 +69,7 @@ fun HomeRoute(
         onOpenRecurrences = onOpenRecurrences,
         onOpenInstallments = onOpenInstallments,
         onOpenCards = onOpenCards,
+        onOpenSavings = onOpenSavings,
         onOpenSettings = onOpenSettings,
     )
 }
@@ -84,6 +86,7 @@ fun HomeScreen(
     onOpenRecurrences: () -> Unit,
     onOpenInstallments: () -> Unit,
     onOpenCards: () -> Unit,
+    onOpenSavings: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
@@ -108,6 +111,7 @@ fun HomeScreen(
                             listOf(
                                 R.string.recurrences_title to onOpenRecurrences,
                                 R.string.installments_title to onOpenInstallments,
+                                R.string.savings_title to onOpenSavings,
                                 R.string.cards_title to onOpenCards,
                                 R.string.settings_title to onOpenSettings,
                             ).forEach { (label, open) ->
@@ -189,13 +193,29 @@ private fun Breakdown(state: HomeUiState, onEditGoal: () -> Unit) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(vertical = 8.dp)) {
             BreakdownLine(R.string.home_income, stringResource(R.string.amount_income, formatCents(available.incomeCents)))
+            if (available.withdrawalsCents > 0) {
+                BreakdownLine(
+                    R.string.home_withdrawals,
+                    stringResource(R.string.amount_income, formatCents(available.withdrawalsCents)),
+                )
+            }
             BreakdownLine(R.string.home_fixed, stringResource(R.string.amount_expense, formatCents(available.fixedExpensesCents)))
             BreakdownLine(
                 label = R.string.home_goal,
-                value = if (state.hasGoal) {
-                    stringResource(R.string.amount_expense, formatCents(available.investmentGoalCents))
+                // Shows what is reserved: the goal, or more when more was contributed.
+                value = if (state.hasGoal || available.contributionsCents > 0) {
+                    stringResource(R.string.amount_expense, formatCents(available.reservedForSavingsCents))
                 } else {
                     stringResource(R.string.home_goal_unset)
+                },
+                supporting = when {
+                    state.hasGoal -> stringResource(
+                        R.string.home_goal_and_saved,
+                        formatCents(available.investmentGoalCents),
+                        formatCents(state.savedCents),
+                    )
+                    state.savedCents != 0L -> stringResource(R.string.home_saved_this_month, formatCents(state.savedCents))
+                    else -> null
                 },
                 onClick = onEditGoal,
             )
@@ -209,7 +229,12 @@ private fun Breakdown(state: HomeUiState, onEditGoal: () -> Unit) {
 
 /** With [onClick], the line shows an edit icon and the whole line is tappable. */
 @Composable
-private fun BreakdownLine(@StringRes label: Int, value: String, onClick: (() -> Unit)? = null) {
+private fun BreakdownLine(
+    @StringRes label: Int,
+    value: String,
+    supporting: String? = null,
+    onClick: (() -> Unit)? = null,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -218,7 +243,12 @@ private fun BreakdownLine(@StringRes label: Int, value: String, onClick: (() -> 
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(stringResource(label), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(label), style = MaterialTheme.typography.bodyLarge)
+            supporting?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
         Text(value, style = MaterialTheme.typography.bodyLarge)
         if (onClick != null) {
             Icon(Icons.Filled.Edit, stringResource(R.string.goal_edit), tint = MaterialTheme.colorScheme.primary)

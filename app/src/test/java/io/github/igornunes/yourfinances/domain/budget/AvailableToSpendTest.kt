@@ -57,6 +57,49 @@ class AvailableToSpendTest {
     }
 
     @Test
+    fun `contributions above the goal reserve more`() {
+        val entries = listOf(entry(EntryType.INCOME, 300000), entry(EntryType.INVESTMENT, 150000))
+        val result = availableToSpend(entries, march, 100000, DateBasis.CASH)
+        assertEquals(150000L, result.reservedForSavingsCents)
+        assertEquals(150000L, result.availableCents)
+    }
+
+    @Test
+    fun `contributing and withdrawing the same amount cancel out`() {
+        val entries = listOf(
+            entry(EntryType.INCOME, 300000),
+            entry(EntryType.INVESTMENT, 100000),
+            entry(EntryType.WITHDRAWAL, 100000),
+        )
+        assertEquals(300000L, availableToSpend(entries, march, 0, DateBasis.CASH).availableCents)
+    }
+
+    @Test
+    fun `predicted withdrawals count only once confirmed, predicted contributions already reserve`() {
+        val entries = listOf(
+            entry(EntryType.INCOME, 300000),
+            entry(EntryType.WITHDRAWAL, 50000, status = EntryStatus.PREDICTED),
+            entry(EntryType.INVESTMENT, 40000, status = EntryStatus.PREDICTED),
+        )
+        val result = availableToSpend(entries, march, 0, DateBasis.CASH)
+        assertEquals(0L, result.withdrawalsCents)
+        assertEquals(40000L, result.contributionsCents)
+        assertEquals(260000L, result.availableCents)
+    }
+
+    @Test
+    fun `withdrawals are available to spend again`() {
+        val entries = listOf(
+            entry(EntryType.INCOME, 300000),
+            entry(EntryType.WITHDRAWAL, 50000),
+            entry(EntryType.FLEXIBLE_EXPENSE, 20000),
+        )
+        val result = availableToSpend(entries, march, 100000, DateBasis.CASH)
+        assertEquals(50000L, result.withdrawalsCents)
+        assertEquals(300000L + 50000L - 100000L - 20000L, result.availableCents)
+    }
+
+    @Test
     fun `entries of other months are ignored`() {
         val entries = listOf(
             entry(EntryType.INCOME, 300000),

@@ -262,11 +262,21 @@ fun ErrorText(text: String) {
     Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
 }
 
-/** "À vista" plus one chip per card; scrolls sideways when there are many cards. */
+/** "À vista" plus one chip per card. */
 @Composable
 fun PaymentSelector(
     cards: List<CreditCard>,
     selectedCardId: Long?,
+    onSelect: (Long?) -> Unit,
+    enabled: Boolean,
+) = ChoiceChips(R.string.payment_cash, cards.map { it.id to it.name }, selectedCardId, onSelect, enabled)
+
+/** A "none" chip ([noneLabel], selecting null) plus one chip per option; scrolls sideways when long. */
+@Composable
+fun ChoiceChips(
+    @StringRes noneLabel: Int,
+    options: List<Pair<Long, String>>,
+    selectedId: Long?,
     onSelect: (Long?) -> Unit,
     enabled: Boolean,
 ) {
@@ -275,17 +285,17 @@ fun PaymentSelector(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         FilterChip(
-            selected = selectedCardId == null,
+            selected = selectedId == null,
             onClick = { onSelect(null) },
             enabled = enabled,
-            label = { Text(stringResource(R.string.payment_cash)) },
+            label = { Text(stringResource(noneLabel)) },
         )
-        cards.forEach { card ->
+        options.forEach { (id, name) ->
             FilterChip(
-                selected = selectedCardId == card.id,
-                onClick = { onSelect(card.id) },
+                selected = selectedId == id,
+                onClick = { onSelect(id) },
                 enabled = enabled,
-                label = { Text(card.name) },
+                label = { Text(name) },
             )
         }
     }

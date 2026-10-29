@@ -9,6 +9,7 @@ import io.github.igornunes.yourfinances.domain.budget.availableToSpend
 import io.github.igornunes.yourfinances.domain.budget.goalFor
 import io.github.igornunes.yourfinances.domain.model.DateBasis
 import io.github.igornunes.yourfinances.domain.recurrence.isBeyondPredictions
+import io.github.igornunes.yourfinances.domain.savings.savedInMonthCents
 import io.github.igornunes.yourfinances.ui.components.todayFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +28,8 @@ val HOME_BASIS = DateBasis.ACCRUAL
 data class HomeUiState(
     val available: AvailableToSpend,
     val hasGoal: Boolean = false,
+    /** Contributions minus withdrawals confirmed this month, to compare with the goal. */
+    val savedCents: Long = 0,
     /** Recurring entries are not generated for this month yet, so the number leaves them out. */
     val beyondPredictions: Boolean = false,
     val loading: Boolean = true,
@@ -50,6 +53,7 @@ class HomeViewModel(entries: EntryRepository, goals: InvestmentGoalRepository, c
                 HomeUiState(
                     available = availableToSpend(list, month, goal?.amountCents ?: 0, HOME_BASIS),
                     hasGoal = goal != null,
+                    savedCents = savedInMonthCents(list, month, today),
                     beyondPredictions = isBeyondPredictions(month, today),
                     loading = false,
                 )

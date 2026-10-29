@@ -33,6 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.igornunes.yourfinances.R
 import io.github.igornunes.yourfinances.domain.model.EntryType
 import io.github.igornunes.yourfinances.ui.components.AmountField
+import io.github.igornunes.yourfinances.ui.components.ChoiceChips
 import io.github.igornunes.yourfinances.ui.components.ConfirmDialog
 import io.github.igornunes.yourfinances.ui.components.DateChip
 import io.github.igornunes.yourfinances.ui.components.ErrorText
@@ -63,6 +64,7 @@ fun EntryFormRoute(
         onDateChange = viewModel::onDateChange,
         onApplyToUpcomingChange = viewModel::onApplyToUpcomingChange,
         onCardChange = viewModel::onCardChange,
+        onPocketChange = viewModel::onPocketChange,
         onSave = viewModel::save,
         onDelete = viewModel::delete,
         onBack = onDone,
@@ -78,6 +80,7 @@ fun EntryFormScreen(
     onDateChange: (LocalDate) -> Unit,
     onApplyToUpcomingChange: (Boolean) -> Unit,
     onCardChange: (Long?) -> Unit,
+    onPocketChange: (Long?) -> Unit,
     onSave: () -> Unit,
     onDelete: () -> Unit,
     onBack: () -> Unit,
@@ -130,6 +133,16 @@ fun EntryFormScreen(
         if (state.showsPayment) {
             PaymentSelector(state.cards, state.cardId, onCardChange, enabled = valuesEnabled)
             state.cardDueDate?.let { HintText(stringResource(R.string.payment_card_due, formatShortDate(it))) }
+        }
+
+        if (state.showsPocket) {
+            ChoiceChips(
+                noneLabel = R.string.pocket_none,
+                options = state.pockets.map { it.id to it.name },
+                selectedId = state.pocketId,
+                onSelect = onPocketChange,
+                enabled = valuesEnabled,
+            )
         }
 
         OutlinedTextField(

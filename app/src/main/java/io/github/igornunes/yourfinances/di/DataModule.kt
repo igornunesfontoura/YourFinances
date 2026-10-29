@@ -17,6 +17,8 @@ import io.github.igornunes.yourfinances.data.repository.RoomEntryRepository
 import io.github.igornunes.yourfinances.data.repository.RoomInstallmentRepository
 import io.github.igornunes.yourfinances.data.repository.RoomInvestmentGoalRepository
 import io.github.igornunes.yourfinances.data.repository.RoomRecurrenceRepository
+import io.github.igornunes.yourfinances.data.repository.RoomSavingsRepository
+import io.github.igornunes.yourfinances.data.repository.SavingsRepository
 import io.github.igornunes.yourfinances.data.security.DatabaseKeyProvider
 import io.github.igornunes.yourfinances.data.security.DatabaseRecovery
 import io.github.igornunes.yourfinances.data.security.KeystoreDatabaseRecovery
@@ -48,5 +50,6 @@ val dataModule = module {
     single<InstallmentRepository> { RoomInstallmentRepository(get()) }
     single { CategoryRepository(get()) }
     single<CreditCardRepository> { RoomCreditCardRepository(get()) }
+    single<SavingsRepository> { RoomSavingsRepository(get()) }
     single<InvestmentGoalRepository> { RoomInvestmentGoalRepository(get<AppDatabase>().investmentGoalDao()) }
 }

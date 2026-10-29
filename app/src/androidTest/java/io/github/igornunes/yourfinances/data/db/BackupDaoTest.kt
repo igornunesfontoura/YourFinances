@@ -11,15 +11,14 @@ import io.github.igornunes.yourfinances.data.db.entity.CategoryEntity
 import io.github.igornunes.yourfinances.data.db.entity.CreditCardEntity
 import io.github.igornunes.yourfinances.data.db.entity.EntryEntity
 import io.github.igornunes.yourfinances.data.db.entity.InstallmentPurchaseEntity
-import io.github.igornunes.yourfinances.data.db.entity.InvestmentEntity
 import io.github.igornunes.yourfinances.data.db.entity.InvestmentGoalEntity
 import io.github.igornunes.yourfinances.data.db.entity.InvoicePaymentEntity
 import io.github.igornunes.yourfinances.data.db.entity.RecurrenceEntity
 import io.github.igornunes.yourfinances.data.db.entity.RecurrenceSkipEntity
+import io.github.igornunes.yourfinances.data.db.entity.SavingsPocketEntity
 import io.github.igornunes.yourfinances.domain.model.EntryStatus
 import io.github.igornunes.yourfinances.domain.model.EntryType
 import io.github.igornunes.yourfinances.domain.model.Frequency
-import io.github.igornunes.yourfinances.domain.model.Indexer
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -27,7 +26,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -51,10 +49,14 @@ class BackupDaoTest {
         recurrences = listOf(RecurrenceEntity(3, EntryType.FIXED_EXPENSE, 5990, "Internet", Frequency.MONTHLY, 5, march5, null, 1)),
         recurrenceSkips = listOf(RecurrenceSkipEntity(3, LocalDate.of(2026, 4, 5))),
         installmentPurchases = listOf(InstallmentPurchaseEntity(4, "TV", 2000, 2, march5, EntryType.FIXED_EXPENSE, 1, 2)),
-        entries = listOf(entry(10, cardId = 2, purchaseId = 4), entry(11, cardId = null, recurrenceId = 3), entry(12, cardId = null)),
+        entries = listOf(
+            entry(10, cardId = 2, purchaseId = 4),
+            entry(11, cardId = null, recurrenceId = 3),
+            entry(12, cardId = null).copy(type = EntryType.INVESTMENT, categoryId = null, savingsPocketId = 5),
+        ),
         invoicePayments = listOf(InvoicePaymentEntity(2, LocalDate.of(2026, 4, 5), LocalDate.of(2026, 4, 1))),
-        investments = listOf(InvestmentEntity(5, "CDB", Indexer.CDI, BigDecimal("110.5"), march5, 100000)),
         investmentGoals = listOf(InvestmentGoalEntity(YearMonth.of(2026, 3), 100000)),
+        savingsPockets = listOf(SavingsPocketEntity(5, "Reserva", 1000000)),
     )
 
     @Before

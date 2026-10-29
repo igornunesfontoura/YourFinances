@@ -191,6 +191,7 @@ private fun TotalsCard(totals: MonthTotals) {
             TotalLine(R.string.month_income, totals.incomeCents)
             TotalLine(R.string.month_expenses, totals.expensesCents)
             TotalLine(R.string.month_investments, totals.investmentCents)
+            if (totals.withdrawalsCents > 0) TotalLine(R.string.month_withdrawals, totals.withdrawalsCents)
             TotalLine(R.string.month_balance, totals.balanceCents, emphasized = true)
         }
     }
@@ -216,7 +217,7 @@ private fun EntryRow(entry: Entry, cardName: String?, onClick: () -> Unit, onCon
         if (cardName != null) add(cardName)
         if (entry.status == EntryStatus.PREDICTED) add(stringResource(R.string.entry_predicted))
     }.joinToString(stringResource(R.string.entry_details_separator))
-    val isIncome = entry.type == EntryType.INCOME
+    val isIncome = entry.type.isInflow
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
         leadingContent = if (entry.status == EntryStatus.PREDICTED) {

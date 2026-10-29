@@ -76,6 +76,12 @@ class RecurrenceRulesTest {
     }
 
     @Test
+    fun `apply to upcoming carries the pocket of a contribution`() {
+        val contribution = occurrence(4).copy(type = EntryType.INVESTMENT, savingsPocketId = 3)
+        assertEquals(3L, recurrence.withValuesFrom(contribution).savingsPocketId)
+    }
+
+    @Test
     fun `apply to upcoming rejects an entry of another recurrence`() {
         assertThrows<IllegalArgumentException> { recurrence.withValuesFrom(occurrence(99)) }
     }

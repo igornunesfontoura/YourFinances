@@ -35,6 +35,14 @@ class EntryTest {
     }
 
     @Test
+    fun `only contributions and withdrawals use a pocket`() {
+        entry().copy(type = EntryType.INVESTMENT, savingsPocketId = 1)
+        entry().copy(type = EntryType.WITHDRAWAL, savingsPocketId = 1)
+        assertThrows<IllegalArgumentException> { entry().copy(savingsPocketId = 1) }
+        assertThrows<IllegalArgumentException> { entry().copy(type = EntryType.WITHDRAWAL, creditCardId = 1) }
+    }
+
+    @Test
     fun `negative amount is rejected`() {
         assertThrows<IllegalArgumentException> { entry(amount = -1) }
     }

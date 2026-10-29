@@ -154,4 +154,24 @@ class RecurrenceScheduleTest {
         )
         assertEquals(listOf(LocalDate.of(2026, 12, 15)), entries.map { it.scheduledFor })
     }
+
+    @Test
+    fun `a recurring contribution predicts entries in its pocket`() {
+        val monthly = Recurrence(
+            id = 9, type = EntryType.INVESTMENT, amountCents = 50000, description = "Reserva", frequency = Frequency.MONTHLY,
+            dayOfMonth = 5, startsOn = LocalDate.of(2026, 1, 1), savingsPocketId = 2,
+        )
+        val entries = monthly.predictedEntriesBetween(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 2, 28))
+        assertEquals(listOf(2L, 2L), entries.map { it.savingsPocketId })
+    }
+
+    @Test
+    fun `only contributions and withdrawals recur into a pocket`() {
+        org.junit.jupiter.api.assertThrows<IllegalArgumentException> {
+            Recurrence(
+                type = EntryType.FIXED_EXPENSE, amountCents = 1, description = "", frequency = Frequency.MONTHLY,
+                dayOfMonth = 1, startsOn = LocalDate.of(2026, 1, 1), savingsPocketId = 2,
+            )
+        }
+    }
 }

@@ -58,6 +58,7 @@ fun Recurrence.predictedEntriesBetween(
                 categoryId = categoryId,
                 recurrenceId = id,
                 scheduledFor = date,
+                savingsPocketId = savingsPocketId,
             )
         }
 }

@@ -5,9 +5,11 @@ import androidx.room.testing.MigrationTestHelper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.igornunes.yourfinances.data.db.entity.InvestmentGoalEntity
+import io.github.igornunes.yourfinances.data.db.entity.SavingsPocketEntity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -70,6 +72,37 @@ class MigrationTest {
             database.investmentGoalDao().upsert(InvestmentGoalEntity(YearMonth.of(2026, 3), 100000))
             assertEquals(1, database.investmentGoalDao().observeAll().first().size)
             assertEquals(500000L, database.entryDao().getById(1)!!.amountCents)
+        } finally {
+            database.close()
+        }
+    }
+
+    @Test
+    fun migrate3To4KeepsEntriesAndAddsPockets() = runTest {
+        helper.createDatabase(name, 3).apply {
+            execSQL(
+                "INSERT INTO entries (id, type, amount_cents, description, occurred_on, paid_on, status) " +
+                    "VALUES (1, 'INVESTMENT', 100000, 'Aporte', 20500, 20500, 'CONFIRMED')",
+            )
+            execSQL("INSERT INTO rates (series_code, date, value_percent) VALUES (12, 20500, '0.04')")
+            close()
+        }
+
+        helper.runMigrationsAndValidate(name, 4, true, MIGRATION_3_4).close()
+
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val database = Room.databaseBuilder(context, AppDatabase::class.java, name)
+            .addMigrations(*ALL_MIGRATIONS)
+            .build()
+        try {
+            val pocketId = database.savingsPocketDao().insert(SavingsPocketEntity(name = "Reserva", targetCents = null))
+            val entry = database.entryDao().getById(1)!!
+            assertEquals(null, entry.savingsPocketId)
+            database.entryDao().update(entry.copy(savingsPocketId = pocketId))
+            assertEquals(pocketId, database.entryDao().getById(1)!!.savingsPocketId)
+            // RESTRICT holds on the migrated table: a pocket in use cannot be deleted.
+            val deleted = runCatching { database.savingsPocketDao().delete(SavingsPocketEntity(pocketId, "Reserva", null)) }
+            assertTrue(deleted.isFailure)
         } finally {
             database.close()
         }

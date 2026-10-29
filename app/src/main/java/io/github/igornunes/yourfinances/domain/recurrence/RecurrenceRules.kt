@@ -34,5 +34,6 @@ fun Recurrence.withValuesFrom(entry: Entry): Recurrence {
         amountCents = entry.amountCents,
         description = entry.description,
         categoryId = entry.categoryId,
+        savingsPocketId = entry.savingsPocketId,
     )
 }

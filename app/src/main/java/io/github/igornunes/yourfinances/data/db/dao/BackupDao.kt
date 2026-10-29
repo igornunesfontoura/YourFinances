@@ -9,11 +9,11 @@ import io.github.igornunes.yourfinances.data.db.entity.CategoryEntity
 import io.github.igornunes.yourfinances.data.db.entity.CreditCardEntity
 import io.github.igornunes.yourfinances.data.db.entity.EntryEntity
 import io.github.igornunes.yourfinances.data.db.entity.InstallmentPurchaseEntity
-import io.github.igornunes.yourfinances.data.db.entity.InvestmentEntity
 import io.github.igornunes.yourfinances.data.db.entity.InvestmentGoalEntity
 import io.github.igornunes.yourfinances.data.db.entity.InvoicePaymentEntity
 import io.github.igornunes.yourfinances.data.db.entity.RecurrenceEntity
 import io.github.igornunes.yourfinances.data.db.entity.RecurrenceSkipEntity
+import io.github.igornunes.yourfinances.data.db.entity.SavingsPocketEntity
 
 /** Whole-database reads and the all-or-nothing replace used by backup restore. */
 @Dao
@@ -35,7 +35,7 @@ abstract class BackupDao {
     @Query("SELECT * FROM invoice_payments ORDER BY card_id, due_date")
     abstract suspend fun invoicePayments(): List<InvoicePaymentEntity>
 
-    @Query("SELECT * FROM investments ORDER BY id") abstract suspend fun investments(): List<InvestmentEntity>
+    @Query("SELECT * FROM savings_pockets ORDER BY id") abstract suspend fun savingsPockets(): List<SavingsPocketEntity>
 
     @Query("SELECT * FROM investment_goals ORDER BY starts_in")
     abstract suspend fun investmentGoals(): List<InvestmentGoalEntity>
@@ -50,8 +50,8 @@ abstract class BackupDao {
         installmentPurchases = installmentPurchases(),
         entries = entries(),
         invoicePayments = invoicePayments(),
-        investments = investments(),
         investmentGoals = investmentGoals(),
+        savingsPockets = savingsPockets(),
     )
 
     /**
@@ -67,17 +67,17 @@ abstract class BackupDao {
         deleteRecurrences()
         deleteCreditCards()
         deleteCategories()
-        deleteInvestments()
+        deleteSavingsPockets()
         deleteInvestmentGoals()
 
         insertCategories(tables.categories)
         insertCreditCards(tables.creditCards)
+        insertSavingsPockets(tables.savingsPockets)
         insertRecurrences(tables.recurrences)
         insertRecurrenceSkips(tables.recurrenceSkips)
         insertInstallmentPurchases(tables.installmentPurchases)
         insertEntries(tables.entries)
         insertInvoicePayments(tables.invoicePayments)
-        insertInvestments(tables.investments)
         insertInvestmentGoals(tables.investmentGoals)
     }
 
@@ -95,7 +95,7 @@ abstract class BackupDao {
 
     @Query("DELETE FROM categories") protected abstract suspend fun deleteCategories()
 
-    @Query("DELETE FROM investments") protected abstract suspend fun deleteInvestments()
+    @Query("DELETE FROM savings_pockets") protected abstract suspend fun deleteSavingsPockets()
 
     @Query("DELETE FROM investment_goals") protected abstract suspend fun deleteInvestmentGoals()
 
@@ -113,7 +113,7 @@ abstract class BackupDao {
 
     @Insert protected abstract suspend fun insertInvoicePayments(rows: List<InvoicePaymentEntity>)
 
-    @Insert protected abstract suspend fun insertInvestments(rows: List<InvestmentEntity>)
+    @Insert protected abstract suspend fun insertSavingsPockets(rows: List<SavingsPocketEntity>)
 
     @Insert protected abstract suspend fun insertInvestmentGoals(rows: List<InvestmentGoalEntity>)
 }

@@ -39,6 +39,13 @@ import java.time.LocalDate
             childColumns = ["installment_purchase_id"],
             onDelete = ForeignKey.CASCADE,
         ),
+        // A pocket with history is kept: deleting it would silently change what was saved.
+        ForeignKey(
+            entity = SavingsPocketEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["savings_pocket_id"],
+            onDelete = ForeignKey.RESTRICT,
+        ),
     ],
     indices = [
         Index("occurred_on"),
@@ -47,6 +54,7 @@ import java.time.LocalDate
         Index("credit_card_id"),
         Index("installment_purchase_id"),
         Index(value = ["recurrence_id", "scheduled_for"], unique = true),
+        Index("savings_pocket_id"),
     ],
 )
 data class EntryEntity(
@@ -64,6 +72,7 @@ data class EntryEntity(
     @ColumnInfo(name = "installment_purchase_id") val installmentPurchaseId: Long?,
     @ColumnInfo(name = "installment_number") val installmentNumber: Int?,
     @ColumnInfo(name = "installment_count") val installmentCount: Int?,
+    @ColumnInfo(name = "savings_pocket_id") val savingsPocketId: Long? = null,
 )
 
 fun EntryEntity.toDomain() = Entry(
@@ -82,6 +91,7 @@ fun EntryEntity.toDomain() = Entry(
     installmentPurchaseId = installmentPurchaseId,
     installmentNumber = installmentNumber,
     installmentCount = installmentCount,
+    savingsPocketId = savingsPocketId,
 )
 
 fun Entry.toEntity() = EntryEntity(
@@ -99,4 +109,5 @@ fun Entry.toEntity() = EntryEntity(
     installmentPurchaseId = installmentPurchaseId,
     installmentNumber = installmentNumber,
     installmentCount = installmentCount,
+    savingsPocketId = savingsPocketId,
 )

@@ -9,9 +9,16 @@ import java.time.LocalDate
 
 /**
  * A confirmed single entry. Paid when it happened, or, on a [card], on the due date of the
- * invoice it falls into.
+ * invoice it falls into. [savingsPocketId] only applies to contributions and withdrawals.
  */
-fun newEntry(type: EntryType, amountCents: Long, description: String, occurredOn: LocalDate, card: CreditCard?): Entry =
+fun newEntry(
+    type: EntryType,
+    amountCents: Long,
+    description: String,
+    occurredOn: LocalDate,
+    card: CreditCard?,
+    savingsPocketId: Long? = null,
+): Entry =
     Entry(
         type = type,
         amountCents = amountCents,
@@ -20,6 +27,7 @@ fun newEntry(type: EntryType, amountCents: Long, description: String, occurredOn
         paidOn = card?.paymentDateFor(occurredOn) ?: occurredOn,
         status = EntryStatus.CONFIRMED,
         creditCardId = card?.id,
+        savingsPocketId = savingsPocketId.takeIf { type.movesSavings },
     )
 
 /** The user checked a predicted entry against reality and kept its values. */
@@ -42,7 +50,14 @@ val Entry.deletesWholePurchase: Boolean
  * not [isQuickEditable] only take the new description. A card entry whose card and date stay the
  * same keeps its invoice, even if the card's days changed since.
  */
-fun Entry.edited(type: EntryType, amountCents: Long, description: String, occurredOn: LocalDate, card: CreditCard?): Entry {
+fun Entry.edited(
+    type: EntryType,
+    amountCents: Long,
+    description: String,
+    occurredOn: LocalDate,
+    card: CreditCard?,
+    savingsPocketId: Long? = null,
+): Entry {
     val reviewed = copy(description = description.trim(), status = EntryStatus.CONFIRMED)
     if (!isQuickEditable) return reviewed
     val sameInvoice = card != null && card.id == creditCardId && occurredOn == this.occurredOn
@@ -56,5 +71,6 @@ fun Entry.edited(type: EntryType, amountCents: Long, description: String, occurr
             else -> occurredOn
         },
         creditCardId = card?.id,
+        savingsPocketId = savingsPocketId.takeIf { type.movesSavings },
     )
 }

@@ -16,6 +16,8 @@ import io.github.igornunes.yourfinances.ui.month.MonthViewModel
 import io.github.igornunes.yourfinances.ui.recurrence.RecurrenceFormViewModel
 import io.github.igornunes.yourfinances.ui.recovery.RecoveryViewModel
 import io.github.igornunes.yourfinances.ui.recurrence.RecurrenceListViewModel
+import io.github.igornunes.yourfinances.ui.savings.PocketFormViewModel
+import io.github.igornunes.yourfinances.ui.savings.SavingsViewModel
 import io.github.igornunes.yourfinances.ui.settings.SettingsViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
@@ -26,12 +28,14 @@ val uiModule = module {
     single<DeviceLock> { KeyguardDeviceLock(androidContext()) }
     viewModel { SettingsViewModel(get(), get(), get(), get(), get()) }
     viewModel { RecoveryViewModel(get(), get(), get()) }
+    viewModel { SavingsViewModel(get(), get()) }
+    viewModel { params -> PocketFormViewModel(params.getOrNull(), get()) }
     viewModel { HomeViewModel(get(), get(), get()) }
     viewModel { params -> InvestmentGoalFormViewModel(params.get(), get()) }
     viewModel { params -> MonthViewModel(params.get(), get(), get()) }
-    viewModel { params -> EntryFormViewModel(params.getOrNull(), get(), get(), get(), get(), get()) }
+    viewModel { params -> EntryFormViewModel(params.getOrNull(), get(), get(), get(), get(), get(), get()) }
     viewModel { RecurrenceListViewModel(get()) }
-    viewModel { params -> RecurrenceFormViewModel(params.getOrNull(), get(), get()) }
+    viewModel { params -> RecurrenceFormViewModel(params.getOrNull(), get(), get(), get()) }
     viewModel { InstallmentListViewModel(get(), get()) }
     viewModel { InstallmentFormViewModel(get(), get(), get()) }
     viewModel { CardListViewModel(get(), get()) }

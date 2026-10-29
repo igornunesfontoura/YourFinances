@@ -22,9 +22,10 @@ class EntriesCsvTest {
             emptyMap(),
         )
         assertEquals(
-            "occurred_on,paid_on,type,description,amount,status,card,category,installment_number,installment_count\r\n" +
-                "2026-03-05,2026-03-05,INCOME,Salário,5000.00,CONFIRMED,,,,\r\n" +
-                "2026-03-10,2026-03-10,FLEXIBLE_EXPENSE,Cinema,-45.90,CONFIRMED,,,,\r\n",
+            "occurred_on,paid_on,type,description,amount,status,card,category,installment_number,installment_count," +
+                "savings_pocket\r\n" +
+                "2026-03-05,2026-03-05,INCOME,Salário,5000.00,CONFIRMED,,,,,\r\n" +
+                "2026-03-10,2026-03-10,FLEXIBLE_EXPENSE,Cinema,-45.90,CONFIRMED,,,,,\r\n",
             csv,
         )
     }
@@ -41,7 +42,7 @@ class EntriesCsvTest {
             installmentCount = 10,
         )
         val row = entriesCsv(listOf(installment), mapOf(2L to "Nubank"), mapOf(3L to "Casa")).split("\r\n")[1]
-        assertEquals("2026-03-05,2026-04-05,FIXED_EXPENSE,TV,-0.05,PREDICTED,Nubank,Casa,2,10", row)
+        assertEquals("2026-03-05,2026-04-05,FIXED_EXPENSE,TV,-0.05,PREDICTED,Nubank,Casa,2,10,", row)
     }
 
     @Test
@@ -49,7 +50,7 @@ class EntriesCsvTest {
         val tricky = entry(1, EntryType.INVESTMENT, 100, "Tesouro, \"Selic\"\nparte 1", LocalDate.of(2026, 3, 5))
         val csv = entriesCsv(listOf(tricky), mapOf(), mapOf())
         assertEquals(
-            "2026-03-05,2026-03-05,INVESTMENT,\"Tesouro, \"\"Selic\"\"\nparte 1\",-1.00,CONFIRMED,,,,\r\n",
+            "2026-03-05,2026-03-05,INVESTMENT,\"Tesouro, \"\"Selic\"\"\nparte 1\",-1.00,CONFIRMED,,,,,\r\n",
             csv.substringAfter("\r\n"),
         )
     }
@@ -62,5 +63,12 @@ class EntriesCsvTest {
         val descriptions = entriesCsv(entries, emptyMap(), emptyMap()).split("\r\n").drop(1).dropLast(1)
             .map { it.split(",")[3] }
         assertEquals(listOf("'=HYPERLINK(1)", "'+1", "'-x", "'@SUM", "ok"), descriptions)
+    }
+
+    @Test
+    fun `withdrawals are positive and name their pocket`() {
+        val withdrawal = entry(1, EntryType.WITHDRAWAL, 25000, "Resgate", LocalDate.of(2026, 3, 5)).copy(savingsPocketId = 4)
+        val row = entriesCsv(listOf(withdrawal), emptyMap(), emptyMap(), mapOf(4L to "Reserva")).split("\r\n")[1]
+        assertEquals("2026-03-05,2026-03-05,WITHDRAWAL,Resgate,250.00,CONFIRMED,,,,,Reserva", row)
     }
 }

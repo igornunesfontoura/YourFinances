@@ -57,6 +57,16 @@ interface EntryDao {
     @Query("SELECT * FROM entries WHERE credit_card_id = :cardId")
     suspend fun getCardEntries(cardId: Long): List<EntryEntity>
 
+    @Query("SELECT * FROM entries WHERE type IN ('INVESTMENT', 'WITHDRAWAL') ORDER BY occurred_on, id")
+    fun observeSavingsMovements(): Flow<List<EntryEntity>>
+
+    /** Entries and recurrences using the pocket. */
+    @Query(
+        "SELECT (SELECT COUNT(*) FROM entries WHERE savings_pocket_id = :pocketId) + " +
+            "(SELECT COUNT(*) FROM recurrences WHERE savings_pocket_id = :pocketId)",
+    )
+    suspend fun countByPocket(pocketId: Long): Int
+
     @Query("SELECT COUNT(*) FROM entries WHERE credit_card_id = :cardId")
     suspend fun countByCard(cardId: Long): Int
 }

@@ -6,7 +6,8 @@
     <string name="entry_type_income">Entrada</string>
     <string name="entry_type_fixed_expense">Fixa</string>
     <string name="entry_type_flexible_expense">Flexível</string>
-    <string name="entry_type_investment">Investimento</string>
+    <string name="entry_type_investment">Aporte</string>
+    <string name="entry_type_withdrawal">Resgate</string>
 
     <!-- Date basis -->
     <string name="basis_accrual">Competência</string>
@@ -24,6 +25,9 @@
     <string name="home_goal_unset">Definir</string>
     <string name="home_flexible">Saídas flexíveis</string>
     <string name="home_beyond_predictions">As recorrências ainda não foram previstas para este mês: as saídas fixas podem estar incompletas.</string>
+    <string name="home_withdrawals">Resgates</string>
+    <string name="home_saved_this_month">Guardado no mês: %1$s</string>
+    <string name="home_goal_and_saved">Meta %1$s · guardado %2$s</string>
     <string name="home_open_month">Ver lançamentos do mês</string>
 
     <!-- Investment goal -->
@@ -38,7 +42,8 @@
     <string name="month_next">Próximo mês</string>
     <string name="month_income">Entradas</string>
     <string name="month_expenses">Saídas</string>
-    <string name="month_investments">Investido</string>
+    <string name="month_investments">Aportes</string>
+    <string name="month_withdrawals">Resgates</string>
     <string name="month_balance">Saldo</string>
     <string name="month_empty">Nenhum lançamento neste mês</string>
     <string name="entry_add">Novo lançamento</string>
@@ -144,6 +149,24 @@
     <string name="invoice_unmark_paid">Desfazer</string>
     <string name="invoice_empty">Nenhuma compra nesta fatura</string>
     <string name="invoice_entry_untitled">Compra</string>
+
+    <!-- Savings -->
+    <string name="savings_title">Guardado</string>
+    <string name="savings_total">Total guardado</string>
+    <string name="savings_hint">Soma dos aportes menos os resgates já confirmados. Rendimentos não entram: confira o saldo no seu banco.</string>
+    <string name="savings_empty">Nenhum aporte ainda. Registre um lançamento do tipo Aporte.</string>
+    <string name="savings_by_month">Guardado por mês</string>
+    <string name="pocket_none">Sem caixinha</string>
+    <string name="pocket_add">Nova caixinha</string>
+    <string name="pocket_new_title">Nova caixinha</string>
+    <string name="pocket_edit_title">Editar caixinha</string>
+    <string name="pocket_name">Nome (ex.: Reserva de emergência)</string>
+    <string name="pocket_target">Objetivo (opcional)</string>
+    <string name="pocket_target_hint">Quanto você quer juntar nesta caixinha. Deixe em branco se não tiver um valor.</string>
+    <string name="pocket_target_of">Objetivo: %1$s</string>
+    <string name="pocket_delete_blocked">Esta caixinha tem aportes ou resgates e não pode ser excluída.</string>
+    <string name="pocket_delete_confirm_title">Excluir caixinha?</string>
+    <string name="pocket_delete_confirm_message">Só é possível excluir caixinhas sem aportes nem resgates.</string>
 
     <!-- Lock -->
     <string name="lock_title">Your Finances está bloqueado</string>

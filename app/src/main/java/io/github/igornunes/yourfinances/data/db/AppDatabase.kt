@@ -10,21 +10,19 @@ import io.github.igornunes.yourfinances.data.db.dao.CategoryDao
 import io.github.igornunes.yourfinances.data.db.dao.CreditCardDao
 import io.github.igornunes.yourfinances.data.db.dao.EntryDao
 import io.github.igornunes.yourfinances.data.db.dao.InstallmentPurchaseDao
-import io.github.igornunes.yourfinances.data.db.dao.InvestmentDao
 import io.github.igornunes.yourfinances.data.db.dao.InvestmentGoalDao
 import io.github.igornunes.yourfinances.data.db.dao.InvoicePaymentDao
-import io.github.igornunes.yourfinances.data.db.dao.RateDao
 import io.github.igornunes.yourfinances.data.db.dao.RecurrenceDao
+import io.github.igornunes.yourfinances.data.db.dao.SavingsPocketDao
 import io.github.igornunes.yourfinances.data.db.entity.CategoryEntity
 import io.github.igornunes.yourfinances.data.db.entity.CreditCardEntity
 import io.github.igornunes.yourfinances.data.db.entity.EntryEntity
 import io.github.igornunes.yourfinances.data.db.entity.InstallmentPurchaseEntity
-import io.github.igornunes.yourfinances.data.db.entity.InvestmentEntity
 import io.github.igornunes.yourfinances.data.db.entity.InvestmentGoalEntity
 import io.github.igornunes.yourfinances.data.db.entity.InvoicePaymentEntity
-import io.github.igornunes.yourfinances.data.db.entity.RateEntity
 import io.github.igornunes.yourfinances.data.db.entity.RecurrenceEntity
 import io.github.igornunes.yourfinances.data.db.entity.RecurrenceSkipEntity
+import io.github.igornunes.yourfinances.data.db.entity.SavingsPocketEntity
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 
 @Database(
@@ -35,12 +33,11 @@ import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
         RecurrenceSkipEntity::class,
         InstallmentPurchaseEntity::class,
         EntryEntity::class,
-        InvestmentEntity::class,
-        RateEntity::class,
         InvoicePaymentEntity::class,
         InvestmentGoalEntity::class,
+        SavingsPocketEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -50,11 +47,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun recurrenceDao(): RecurrenceDao
     abstract fun installmentPurchaseDao(): InstallmentPurchaseDao
     abstract fun entryDao(): EntryDao
-    abstract fun investmentDao(): InvestmentDao
-    abstract fun rateDao(): RateDao
     abstract fun invoicePaymentDao(): InvoicePaymentDao
     abstract fun investmentGoalDao(): InvestmentGoalDao
     abstract fun backupDao(): BackupDao
+    abstract fun savingsPocketDao(): SavingsPocketDao
 
     companion object {
         const val NAME = "your_finances.db"
