@@ -5,11 +5,22 @@ import io.github.igornunes.yourfinances.domain.model.EntryType
 import io.github.igornunes.yourfinances.domain.model.Frequency
 import io.github.igornunes.yourfinances.domain.model.Recurrence
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
+import java.time.YearMonth
 
 class RecurrenceRulesTest {
+    @Test
+    fun `months after the window are beyond predictions, across the year`() {
+        val today = LocalDate.of(2026, 11, 30)
+        assertFalse(isBeyondPredictions(YearMonth.of(2026, 1), today))
+        assertFalse(isBeyondPredictions(YearMonth.of(2027, 1), today))
+        assertTrue(isBeyondPredictions(YearMonth.of(2027, 2), today))
+    }
+
     @Test
     fun `window covers the current month and two more`() {
         assertEquals(

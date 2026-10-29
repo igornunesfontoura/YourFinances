@@ -12,14 +12,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -37,9 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -57,15 +53,16 @@ import io.github.igornunes.yourfinances.ui.format.formatMonth
 import io.github.igornunes.yourfinances.ui.format.hint
 import io.github.igornunes.yourfinances.ui.format.label
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
+import java.time.YearMonth
 
 @Composable
 fun MonthRoute(
+    month: YearMonth,
+    onBack: () -> Unit,
     onAddEntry: () -> Unit,
     onOpenEntry: (Long) -> Unit,
-    onOpenRecurrences: () -> Unit,
-    onOpenInstallments: () -> Unit,
-    onOpenCards: () -> Unit,
-    viewModel: MonthViewModel = koinViewModel(),
+    viewModel: MonthViewModel = koinViewModel(key = "month-$month") { parametersOf(month) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     MonthScreen(
@@ -77,9 +74,7 @@ fun MonthRoute(
         onOpenEntry = onOpenEntry,
         onConfirmEntry = viewModel::confirm,
         onDismissError = viewModel::dismissError,
-        onOpenRecurrences = onOpenRecurrences,
-        onOpenInstallments = onOpenInstallments,
-        onOpenCards = onOpenCards,
+        onBack = onBack,
     )
 }
 
@@ -94,9 +89,7 @@ fun MonthScreen(
     onOpenEntry: (Long) -> Unit,
     onConfirmEntry: (Entry) -> Unit,
     onDismissError: () -> Unit,
-    onOpenRecurrences: () -> Unit,
-    onOpenInstallments: () -> Unit,
-    onOpenCards: () -> Unit,
+    onBack: () -> Unit,
 ) {
     val snackbar = remember { SnackbarHostState() }
     val errorMessage = stringResource(R.string.save_failed)
@@ -106,7 +99,6 @@ fun MonthScreen(
             onDismissError()
         }
     }
-    var menuOpen by remember { mutableStateOf(false) }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
@@ -114,41 +106,16 @@ fun MonthScreen(
             CenterAlignedTopAppBar(
                 title = { Text(formatMonth(state.month)) },
                 navigationIcon = {
-                    IconButton(onClick = onPreviousMonth) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, stringResource(R.string.month_previous))
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back))
                     }
                 },
                 actions = {
+                    IconButton(onClick = onPreviousMonth) {
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, stringResource(R.string.month_previous))
+                    }
                     IconButton(onClick = onNextMonth) {
                         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, stringResource(R.string.month_next))
-                    }
-                    Box {
-                        IconButton(onClick = { menuOpen = true }) {
-                            Icon(Icons.Filled.MoreVert, stringResource(R.string.menu_more))
-                        }
-                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.recurrences_title)) },
-                                onClick = {
-                                    menuOpen = false
-                                    onOpenRecurrences()
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.installments_title)) },
-                                onClick = {
-                                    menuOpen = false
-                                    onOpenInstallments()
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.cards_title)) },
-                                onClick = {
-                                    menuOpen = false
-                                    onOpenCards()
-                                },
-                            )
-                        }
                     }
                 },
             )

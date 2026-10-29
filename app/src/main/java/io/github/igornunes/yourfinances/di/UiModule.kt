@@ -4,6 +4,8 @@ import io.github.igornunes.yourfinances.ui.card.CardDetailViewModel
 import io.github.igornunes.yourfinances.ui.card.CardFormViewModel
 import io.github.igornunes.yourfinances.ui.card.CardListViewModel
 import io.github.igornunes.yourfinances.ui.entry.EntryFormViewModel
+import io.github.igornunes.yourfinances.ui.goal.InvestmentGoalFormViewModel
+import io.github.igornunes.yourfinances.ui.home.HomeViewModel
 import io.github.igornunes.yourfinances.ui.installment.InstallmentFormViewModel
 import io.github.igornunes.yourfinances.ui.installment.InstallmentListViewModel
 import io.github.igornunes.yourfinances.ui.month.MonthViewModel
@@ -13,7 +15,9 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val uiModule = module {
-    viewModel { MonthViewModel(get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get()) }
+    viewModel { params -> InvestmentGoalFormViewModel(params.get(), get()) }
+    viewModel { params -> MonthViewModel(params.get(), get(), get()) }
     viewModel { params -> EntryFormViewModel(params.getOrNull(), get(), get(), get(), get(), get()) }
     viewModel { RecurrenceListViewModel(get()) }
     viewModel { params -> RecurrenceFormViewModel(params.getOrNull(), get(), get()) }

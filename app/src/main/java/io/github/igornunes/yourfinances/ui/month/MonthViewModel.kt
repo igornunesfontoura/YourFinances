@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.Clock
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -36,9 +35,14 @@ data class MonthUiState(
     val cardNames: Map<Long, String> = emptyMap(),
 )
 
+/** Opens on [initialMonth], the month the main screen was showing. */
 @OptIn(ExperimentalCoroutinesApi::class)
-class MonthViewModel(private val entries: EntryRepository, cards: CreditCardRepository, clock: Clock) : ViewModel() {
-    private val selection = MutableStateFlow(YearMonth.now(clock) to DateBasis.ACCRUAL)
+class MonthViewModel(
+    initialMonth: YearMonth,
+    private val entries: EntryRepository,
+    cards: CreditCardRepository,
+) : ViewModel() {
+    private val selection = MutableStateFlow(initialMonth to DateBasis.ACCRUAL)
     private val actionFailed = MutableStateFlow(false)
 
     val state: StateFlow<MonthUiState> = selection

@@ -5,10 +5,12 @@ import io.github.igornunes.yourfinances.data.repository.CategoryRepository
 import io.github.igornunes.yourfinances.data.repository.CreditCardRepository
 import io.github.igornunes.yourfinances.data.repository.EntryRepository
 import io.github.igornunes.yourfinances.data.repository.InstallmentRepository
+import io.github.igornunes.yourfinances.data.repository.InvestmentGoalRepository
 import io.github.igornunes.yourfinances.data.repository.RecurrenceRepository
 import io.github.igornunes.yourfinances.data.repository.RoomCreditCardRepository
 import io.github.igornunes.yourfinances.data.repository.RoomEntryRepository
 import io.github.igornunes.yourfinances.data.repository.RoomInstallmentRepository
+import io.github.igornunes.yourfinances.data.repository.RoomInvestmentGoalRepository
 import io.github.igornunes.yourfinances.data.repository.RoomRecurrenceRepository
 import io.github.igornunes.yourfinances.data.security.DatabaseKeyProvider
 import org.koin.android.ext.koin.androidContext
@@ -27,4 +29,5 @@ val dataModule = module {
     single<InstallmentRepository> { RoomInstallmentRepository(get()) }
     single { CategoryRepository(get()) }
     single<CreditCardRepository> { RoomCreditCardRepository(get()) }
+    single<InvestmentGoalRepository> { RoomInvestmentGoalRepository(get<AppDatabase>().investmentGoalDao()) }
 }

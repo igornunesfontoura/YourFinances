@@ -21,6 +21,9 @@ fun formatCents(cents: Long): String =
 
 fun formatMonth(month: YearMonth): String = month.format(monthFormatter).capitalized()
 
+/** "outubro de 2026", for the middle of a sentence. */
+fun formatMonthInSentence(month: YearMonth): String = month.format(monthFormatter)
+
 fun formatDay(date: LocalDate): String = date.format(dayFormatter).capitalized()
 
 /** "março". */

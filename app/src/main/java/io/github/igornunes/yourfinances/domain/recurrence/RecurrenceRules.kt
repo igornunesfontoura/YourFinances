@@ -19,6 +19,13 @@ fun predictionWindow(today: LocalDate): PredictionWindow {
     return PredictionWindow(month.atDay(1), month.plusMonths(PREDICTION_MONTHS_AHEAD).atEndOfMonth())
 }
 
+/**
+ * Whether [month] is after the prediction window, so recurring entries are not generated for it
+ * yet and its totals leave them out.
+ */
+fun isBeyondPredictions(month: YearMonth, today: LocalDate): Boolean =
+    month > YearMonth.from(predictionWindow(today).to)
+
 /** "Aplicar às próximas": the template takes the values the user just set on one occurrence. */
 fun Recurrence.withValuesFrom(entry: Entry): Recurrence {
     require(entry.recurrenceId == id) { "entry does not belong to this recurrence" }

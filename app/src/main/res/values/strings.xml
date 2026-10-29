@@ -14,6 +14,25 @@
     <string name="basis_accrual_hint">Pela data da compra</string>
     <string name="basis_cash_hint">Pela data do pagamento</string>
 
+    <!-- Home: quanto ainda posso gastar -->
+    <string name="home_available">Quanto ainda posso gastar</string>
+    <string name="home_overspent">O mês já passou do orçamento</string>
+    <string name="home_basis_hint">Por competência: compras no cartão contam no mês em que foram feitas.</string>
+    <string name="home_income">Entradas</string>
+    <string name="home_fixed">Saídas fixas</string>
+    <string name="home_goal">Meta de investimento</string>
+    <string name="home_goal_unset">Definir</string>
+    <string name="home_flexible">Saídas flexíveis</string>
+    <string name="home_beyond_predictions">As recorrências ainda não foram previstas para este mês: as saídas fixas podem estar incompletas.</string>
+    <string name="home_open_month">Ver lançamentos do mês</string>
+
+    <!-- Investment goal -->
+    <string name="goal_title">Meta de investimento</string>
+    <string name="goal_edit">Alterar meta de investimento</string>
+    <string name="goal_amount">Quanto investir por mês</string>
+    <string name="goal_until_next_hint">Vale de %1$s até a próxima meta, que começa em %2$s. Os meses anteriores não mudam.</string>
+    <string name="goal_starts_hint">Vale a partir de %1$s, até você definir outra meta. Os meses anteriores não mudam.</string>
+
     <!-- Month screen -->
     <string name="month_previous">Mês anterior</string>
     <string name="month_next">Próximo mês</string>

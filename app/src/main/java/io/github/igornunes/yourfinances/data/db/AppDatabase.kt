@@ -10,6 +10,7 @@ import io.github.igornunes.yourfinances.data.db.dao.CreditCardDao
 import io.github.igornunes.yourfinances.data.db.dao.EntryDao
 import io.github.igornunes.yourfinances.data.db.dao.InstallmentPurchaseDao
 import io.github.igornunes.yourfinances.data.db.dao.InvestmentDao
+import io.github.igornunes.yourfinances.data.db.dao.InvestmentGoalDao
 import io.github.igornunes.yourfinances.data.db.dao.InvoicePaymentDao
 import io.github.igornunes.yourfinances.data.db.dao.RateDao
 import io.github.igornunes.yourfinances.data.db.dao.RecurrenceDao
@@ -18,6 +19,7 @@ import io.github.igornunes.yourfinances.data.db.entity.CreditCardEntity
 import io.github.igornunes.yourfinances.data.db.entity.EntryEntity
 import io.github.igornunes.yourfinances.data.db.entity.InstallmentPurchaseEntity
 import io.github.igornunes.yourfinances.data.db.entity.InvestmentEntity
+import io.github.igornunes.yourfinances.data.db.entity.InvestmentGoalEntity
 import io.github.igornunes.yourfinances.data.db.entity.InvoicePaymentEntity
 import io.github.igornunes.yourfinances.data.db.entity.RateEntity
 import io.github.igornunes.yourfinances.data.db.entity.RecurrenceEntity
@@ -35,8 +37,9 @@ import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
         InvestmentEntity::class,
         RateEntity::class,
         InvoicePaymentEntity::class,
+        InvestmentGoalEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -49,6 +52,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun investmentDao(): InvestmentDao
     abstract fun rateDao(): RateDao
     abstract fun invoicePaymentDao(): InvoicePaymentDao
+    abstract fun investmentGoalDao(): InvestmentGoalDao
 
     companion object {
         const val NAME = "your_finances.db"

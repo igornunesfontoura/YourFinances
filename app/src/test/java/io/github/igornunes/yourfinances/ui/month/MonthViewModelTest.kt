@@ -18,18 +18,14 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import java.time.Clock
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.ZoneOffset
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MonthViewModelTest {
     @JvmField
     @RegisterExtension
     val mainDispatcher = MainDispatcherExtension()
-
-    private val clock = Clock.fixed(LocalDate.of(2026, 3, 15).atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
 
     private fun entry(id: Long, type: EntryType, amount: Long, occurredOn: LocalDate, paidOn: LocalDate = occurredOn) =
         Entry(id = id, type = type, amountCents = amount, description = "", occurredOn = occurredOn, paidOn = paidOn)
@@ -47,13 +43,13 @@ class MonthViewModelTest {
 
     /** A subscriber keeps the WhileSubscribed state flowing. */
     private fun TestScope.subscribed(): MonthViewModel {
-        val viewModel = MonthViewModel(repository, FakeCreditCardRepository(listOf(CreditCard(id = 3, name = "Nubank", closingDay = 1, dueDay = 10))), clock)
+        val viewModel = MonthViewModel(YearMonth.of(2026, 3), repository, FakeCreditCardRepository(listOf(CreditCard(id = 3, name = "Nubank", closingDay = 1, dueDay = 10))))
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
         return viewModel
     }
 
     @Test
-    fun `starts on the current month by accrual date, newest day first`() = runTest {
+    fun `starts on the given month by accrual date, newest day first`() = runTest {
         val state = subscribed().state.value
         assertFalse(state.loading)
         assertEquals(YearMonth.of(2026, 3), state.month)

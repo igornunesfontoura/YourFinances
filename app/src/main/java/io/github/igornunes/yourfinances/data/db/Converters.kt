@@ -3,8 +3,12 @@ package io.github.igornunes.yourfinances.data.db
 import androidx.room.TypeConverter
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.YearMonth
 
-/** Dates are stored as epoch days (sortable); decimals as plain strings (no precision loss). */
+/**
+ * Dates are stored as epoch days and months as "yyyy-MM" (both sortable); decimals as plain strings
+ * (no precision loss).
+ */
 class Converters {
     @TypeConverter
     fun localDateToEpochDay(date: LocalDate?): Long? = date?.toEpochDay()
@@ -17,4 +21,10 @@ class Converters {
 
     @TypeConverter
     fun stringToBigDecimal(value: String?): BigDecimal? = value?.let(::BigDecimal)
+
+    @TypeConverter
+    fun yearMonthToString(month: YearMonth?): String? = month?.toString()
+
+    @TypeConverter
+    fun stringToYearMonth(value: String?): YearMonth? = value?.let(YearMonth::parse)
 }

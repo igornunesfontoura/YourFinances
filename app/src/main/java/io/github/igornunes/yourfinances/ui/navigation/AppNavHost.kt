@@ -13,13 +13,19 @@ import io.github.igornunes.yourfinances.ui.card.CardDetailRoute
 import io.github.igornunes.yourfinances.ui.card.CardFormRoute
 import io.github.igornunes.yourfinances.ui.card.CardListRoute
 import io.github.igornunes.yourfinances.ui.entry.EntryFormRoute
+import io.github.igornunes.yourfinances.ui.goal.InvestmentGoalFormRoute
+import io.github.igornunes.yourfinances.ui.home.HomeRoute
 import io.github.igornunes.yourfinances.ui.installment.InstallmentFormRoute
 import io.github.igornunes.yourfinances.ui.installment.InstallmentListRoute
 import io.github.igornunes.yourfinances.ui.month.MonthRoute
 import io.github.igornunes.yourfinances.ui.recurrence.RecurrenceFormRoute
 import io.github.igornunes.yourfinances.ui.recurrence.RecurrenceListRoute
+import java.time.YearMonth
 
-private const val MONTH = "month"
+private const val HOME = "home"
+private const val MONTH_ARG = "month"
+private const val MONTH = "month/{$MONTH_ARG}"
+private const val GOAL = "goal/{$MONTH_ARG}"
 private const val RECURRENCES = "recurrences"
 private const val INSTALLMENTS = "installments"
 private const val INSTALLMENT_NEW = "installment/new"
@@ -30,6 +36,14 @@ private const val RECURRENCE = "recurrence?$ID={$ID}"
 private const val CARDS = "cards"
 private const val CARD = "card/{$ID}"
 private const val CARD_FORM = "cardForm?$ID={$ID}"
+
+private fun monthRoute(month: YearMonth) = "month/$month"
+
+private fun goalRoute(month: YearMonth) = "goal/$month"
+
+private val monthArgument = listOf(navArgument(MONTH_ARG) { type = NavType.StringType })
+
+private fun NavBackStackEntry.month(): YearMonth = YearMonth.parse(requireNotNull(arguments?.getString(MONTH_ARG)))
 
 private fun entryRoute(id: Long? = null) = "entry?$ID=${id ?: NO_ID}"
 
@@ -59,15 +73,27 @@ private fun NavController.closeFrom(from: NavBackStackEntry) {
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = MONTH) {
-        composable(MONTH) { entry ->
-            MonthRoute(
+    NavHost(navController = navController, startDestination = HOME) {
+        composable(HOME) { entry ->
+            HomeRoute(
                 onAddEntry = { navController.navigateFrom(entry, entryRoute()) },
-                onOpenEntry = { id -> navController.navigateFrom(entry, entryRoute(id)) },
+                onOpenMonth = { month -> navController.navigateFrom(entry, monthRoute(month)) },
+                onEditGoal = { month -> navController.navigateFrom(entry, goalRoute(month)) },
                 onOpenRecurrences = { navController.navigateFrom(entry, RECURRENCES) },
                 onOpenInstallments = { navController.navigateFrom(entry, INSTALLMENTS) },
                 onOpenCards = { navController.navigateFrom(entry, CARDS) },
             )
+        }
+        composable(MONTH, arguments = monthArgument) { entry ->
+            MonthRoute(
+                month = entry.month(),
+                onBack = { navController.closeFrom(entry) },
+                onAddEntry = { navController.navigateFrom(entry, entryRoute()) },
+                onOpenEntry = { id -> navController.navigateFrom(entry, entryRoute(id)) },
+            )
+        }
+        composable(GOAL, arguments = monthArgument) { entry ->
+            InvestmentGoalFormRoute(month = entry.month(), onDone = { navController.closeFrom(entry) })
         }
         composable(ENTRY, arguments = idArgument) { entry ->
             EntryFormRoute(entryId = entry.optionalId(), onDone = { navController.closeFrom(entry) })
