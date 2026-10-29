@@ -8,15 +8,15 @@ plugins {
 }
 
 android {
-    namespace = "io.github.igornunes.yourfinances"
+    namespace = "io.github.igornunesfontoura.yourfinances"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "io.github.igornunes.yourfinances"
+        applicationId = "io.github.igornunesfontoura.yourfinances"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
