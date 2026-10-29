@@ -11,3 +11,4 @@ captures/
 .omc/
 *.keystore
 *.jks
+.~lock.*

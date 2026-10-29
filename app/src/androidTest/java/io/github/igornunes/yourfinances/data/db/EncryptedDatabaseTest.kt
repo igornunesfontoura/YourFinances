@@ -19,24 +19,27 @@ import org.junit.runner.RunWith
 class EncryptedDatabaseTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
+    /** Not the app's database: its background worker may open that one meanwhile. */
+    private val name = "encrypted-test.db"
+
     @Before
     @After
     fun deleteDatabase() {
-        context.deleteDatabase(AppDatabase.NAME)
+        context.deleteDatabase(name)
     }
 
     @Test
     fun databaseFileIsNotPlainSqlite() = runTest {
         val passphrase = ByteArray(32) { it.toByte() }
-        val database = AppDatabase.buildEncrypted(context, passphrase.copyOf())
+        val database = AppDatabase.buildEncrypted(context, passphrase.copyOf(), name)
         database.categoryDao().insert(Category(name = "Mercado", type = EntryType.FLEXIBLE_EXPENSE).toEntity())
         assertEquals(1, database.categoryDao().observeAll().first().size)
         database.close()
 
-        val header = context.getDatabasePath(AppDatabase.NAME).inputStream().use { stream -> ByteArray(16).also { stream.read(it) } }
+        val header = context.getDatabasePath(name).inputStream().use { stream -> ByteArray(16).also { stream.read(it) } }
         assertFalse(String(header, Charsets.US_ASCII).startsWith("SQLite format 3"))
 
-        val reopened = AppDatabase.buildEncrypted(context, passphrase.copyOf())
+        val reopened = AppDatabase.buildEncrypted(context, passphrase.copyOf(), name)
         assertEquals("Mercado", reopened.categoryDao().observeAll().first().single().name)
         reopened.close()
     }

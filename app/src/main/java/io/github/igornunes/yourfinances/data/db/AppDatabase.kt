@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import io.github.igornunes.yourfinances.data.db.dao.BackupDao
 import io.github.igornunes.yourfinances.data.db.dao.CategoryDao
 import io.github.igornunes.yourfinances.data.db.dao.CreditCardDao
 import io.github.igornunes.yourfinances.data.db.dao.EntryDao
@@ -53,14 +54,15 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun rateDao(): RateDao
     abstract fun invoicePaymentDao(): InvoicePaymentDao
     abstract fun investmentGoalDao(): InvestmentGoalDao
+    abstract fun backupDao(): BackupDao
 
     companion object {
         const val NAME = "your_finances.db"
 
         /** Opens the SQLCipher-encrypted database. Schema changes always need a written Migration. */
-        fun buildEncrypted(context: Context, passphrase: ByteArray): AppDatabase {
+        fun buildEncrypted(context: Context, passphrase: ByteArray, name: String = NAME): AppDatabase {
             System.loadLibrary("sqlcipher")
-            return Room.databaseBuilder(context, AppDatabase::class.java, NAME)
+            return Room.databaseBuilder(context, AppDatabase::class.java, name)
                 .openHelperFactory(SupportOpenHelperFactory(passphrase))
                 .addMigrations(*ALL_MIGRATIONS)
                 .build()

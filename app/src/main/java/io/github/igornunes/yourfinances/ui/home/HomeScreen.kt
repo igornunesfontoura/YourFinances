@@ -54,6 +54,7 @@ fun HomeRoute(
     onOpenRecurrences: () -> Unit,
     onOpenInstallments: () -> Unit,
     onOpenCards: () -> Unit,
+    onOpenSettings: () -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -67,6 +68,7 @@ fun HomeRoute(
         onOpenRecurrences = onOpenRecurrences,
         onOpenInstallments = onOpenInstallments,
         onOpenCards = onOpenCards,
+        onOpenSettings = onOpenSettings,
     )
 }
 
@@ -82,6 +84,7 @@ fun HomeScreen(
     onOpenRecurrences: () -> Unit,
     onOpenInstallments: () -> Unit,
     onOpenCards: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     Scaffold(
@@ -106,6 +109,7 @@ fun HomeScreen(
                                 R.string.recurrences_title to onOpenRecurrences,
                                 R.string.installments_title to onOpenInstallments,
                                 R.string.cards_title to onOpenCards,
+                                R.string.settings_title to onOpenSettings,
                             ).forEach { (label, open) ->
                                 DropdownMenuItem(
                                     text = { Text(stringResource(label)) },

@@ -130,7 +130,7 @@ Este é o número mais importante do app. Qualquer mudança nessa regra exige te
 3. [x] Recorrências e parcelas
 4. [x] Cartão de crédito e faturas
 5. [x] Tela "quanto ainda posso gastar"
-6. [ ] SQLCipher, bloqueio biométrico, backup criptografado e exportação CSV
+6. [x] SQLCipher, bloqueio biométrico, backup criptografado e exportação CSV
 7. [ ] Investimentos com taxas do BCB
 8. [ ] Orçamento por categoria, gráficos e painel de assinaturas
 9. [ ] Importação de extrato (OFX/CSV)

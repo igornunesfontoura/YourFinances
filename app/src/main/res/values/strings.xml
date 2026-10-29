@@ -145,6 +145,61 @@
     <string name="invoice_empty">Nenhuma compra nesta fatura</string>
     <string name="invoice_entry_untitled">Compra</string>
 
+    <!-- Lock -->
+    <string name="lock_title">Your Finances está bloqueado</string>
+    <string name="lock_unlock">Desbloquear</string>
+    <string name="lock_prompt_title">Desbloquear Your Finances</string>
+    <string name="lock_disable_prompt_title">Confirme para desligar o bloqueio</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Configurações</string>
+    <string name="settings_security">Segurança</string>
+    <string name="settings_lock">Bloquear o app</string>
+    <string name="settings_lock_hint">Pede a biometria ou a senha do aparelho ao abrir e ao voltar depois de 1 minuto fora.</string>
+    <string name="settings_lock_no_device_lock">Este aparelho não tem bloqueio de tela. Configure um PIN, padrão ou senha no Android para o app poder ser bloqueado.</string>
+    <string name="settings_data">Seus dados</string>
+    <string name="settings_backup">Fazer backup criptografado</string>
+    <string name="settings_backup_hint">Salva todos os dados num arquivo protegido por uma senha sua.</string>
+    <string name="settings_restore">Restaurar backup</string>
+    <string name="settings_restore_hint">Substitui todos os dados pelos de um backup.</string>
+    <string name="settings_export_csv">Exportar lançamentos (CSV)</string>
+    <string name="settings_export_csv_hint">Planilha aberta com todos os lançamentos, sem criptografia.</string>
+
+    <!-- Backup and restore -->
+    <string name="backup_password_title">Senha do backup</string>
+    <string name="backup_password_hint">Sem esta senha não há como abrir o backup. Guarde-a num lugar seguro.</string>
+    <string name="backup_password">Senha</string>
+    <string name="backup_password_confirm">Repita a senha</string>
+    <string name="backup_password_too_short">Use pelo menos %1$d caracteres.</string>
+    <string name="backup_password_mismatch">As senhas não são iguais.</string>
+    <string name="backup_saved">Backup salvo</string>
+    <string name="backup_failed">Não foi possível salvar o backup.</string>
+    <string name="restore_title">Restaurar backup?</string>
+    <string name="restore_warning">Todos os dados atuais serão substituídos pelos do backup. Esta ação não pode ser desfeita.</string>
+    <string name="restore_confirm">Restaurar</string>
+    <string name="restore_done">Backup restaurado</string>
+    <string name="restore_wrong_password">Senha incorreta, ou o arquivo não é um backup do Your Finances.</string>
+    <string name="restore_invalid">Este backup está danificado ou foi feito por uma versão mais nova do app.</string>
+    <string name="restore_failed">Não foi possível restaurar o backup. Nenhum dado foi alterado.</string>
+    <string name="csv_saved">Lançamentos exportados</string>
+    <string name="csv_failed">Não foi possível exportar os lançamentos.</string>
+
+    <!-- Recovery -->
+    <string name="recovery_title">Não foi possível abrir seus dados</string>
+    <string name="recovery_message">A chave que protege os dados neste aparelho não pode mais ser lida. Isso acontece, por exemplo, depois de redefinir o bloqueio de tela ou restaurar o sistema. Os dados só podem ser recuperados a partir de um backup.</string>
+    <string name="recovery_restore">Restaurar um backup</string>
+    <string name="recovery_retry">Tentar novamente</string>
+    <string name="recovery_temporary_title">Seus dados estão temporariamente indisponíveis</string>
+    <string name="recovery_temporary_message">O sistema não conseguiu ler a chave que protege os dados agora. Nada foi perdido: tente novamente em alguns instantes ou reinicie o aparelho.</string>
+    <string name="recovery_restore_failed_after_erase">Os dados que não podiam ser abertos foram apagados, mas o backup não pôde ser restaurado. Tente outro arquivo ou toque em Tentar novamente para usar o app vazio.</string>
+    <string name="recovery_failed">Algo deu errado. Tente novamente.</string>
+    <string name="recovery_still_unavailable">A chave continua indisponível.</string>
+    <string name="recovery_start_over">Começar do zero</string>
+    <string name="recovery_start_over_hint">Sem backup, só é possível apagar os dados que não podem mais ser abertos e começar com o app vazio.</string>
+    <string name="recovery_start_over_confirm_title">Apagar os dados e começar do zero?</string>
+    <string name="recovery_start_over_confirm_message">Os dados que não podem mais ser abertos serão apagados para sempre.</string>
+
+    <string name="action_continue">Continuar</string>
     <string name="action_clear">Limpar</string>
     <string name="action_back">Voltar</string>
     <string name="action_cancel">Cancelar</string>

@@ -20,6 +20,7 @@ import io.github.igornunes.yourfinances.ui.installment.InstallmentListRoute
 import io.github.igornunes.yourfinances.ui.month.MonthRoute
 import io.github.igornunes.yourfinances.ui.recurrence.RecurrenceFormRoute
 import io.github.igornunes.yourfinances.ui.recurrence.RecurrenceListRoute
+import io.github.igornunes.yourfinances.ui.settings.SettingsRoute
 import java.time.YearMonth
 
 private const val HOME = "home"
@@ -34,6 +35,7 @@ private const val NO_ID = -1L
 private const val ENTRY = "entry?$ID={$ID}"
 private const val RECURRENCE = "recurrence?$ID={$ID}"
 private const val CARDS = "cards"
+private const val SETTINGS = "settings"
 private const val CARD = "card/{$ID}"
 private const val CARD_FORM = "cardForm?$ID={$ID}"
 
@@ -70,8 +72,9 @@ private fun NavController.closeFrom(from: NavBackStackEntry) {
     if (currentBackStackEntry?.id == from.id) popBackStack()
 }
 
+/** [onDisableLock] asks for the device credential before the app lock is turned off. */
 @Composable
-fun AppNavHost() {
+fun AppNavHost(onDisableLock: () -> Unit) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = HOME) {
         composable(HOME) { entry ->
@@ -82,7 +85,11 @@ fun AppNavHost() {
                 onOpenRecurrences = { navController.navigateFrom(entry, RECURRENCES) },
                 onOpenInstallments = { navController.navigateFrom(entry, INSTALLMENTS) },
                 onOpenCards = { navController.navigateFrom(entry, CARDS) },
+                onOpenSettings = { navController.navigateFrom(entry, SETTINGS) },
             )
+        }
+        composable(SETTINGS) { entry ->
+            SettingsRoute(onBack = { navController.closeFrom(entry) }, onDisableLock = onDisableLock)
         }
         composable(MONTH, arguments = monthArgument) { entry ->
             MonthRoute(
