@@ -35,6 +35,11 @@ class ValuesTest {
     }
 
     @org.junit.jupiter.api.Test
+    fun `non-breaking space, as in formatted currency`() {
+        assertEquals(-123456L, parseAmountCents("-R$\u00A01.234,56"))
+    }
+
+    @org.junit.jupiter.api.Test
     fun `decimal hint decides a lone separator`() {
         assertEquals(1234500L, parseAmountCents("12345.000".dropLast(1), decimalSeparator = '.'))
         assertEquals(-123400L, parseAmountCents("-1234", decimalSeparator = '.'))

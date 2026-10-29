@@ -12,7 +12,7 @@ import java.time.format.ResolverStyle
  * through floating point. Null when the text is not an amount or has more than two decimals.
  */
 fun parseAmountCents(text: String, decimalSeparator: Char? = null): Long? {
-    var raw = text.trim().replace("R$", "").replace(" ", "").replace(" ", "")
+    var raw = text.trim().replace("R$", "").replace(" ", "").replace("\u00A0", "")
     var negative = false
     if (raw.startsWith("(") && raw.endsWith(")")) {
         negative = true

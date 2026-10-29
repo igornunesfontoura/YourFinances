@@ -8,7 +8,7 @@ data class CsvTable(val header: List<String>, val rows: List<List<String>>)
  * appears most outside quotes). A UTF-8 BOM and blank lines are ignored.
  */
 fun parseCsv(text: String): CsvTable {
-    val content = text.removePrefix("﻿")
+    val content = text.removePrefix("\uFEFF")
     val separator = guessSeparator(content.lineSequence().firstOrNull { it.isNotBlank() }.orEmpty())
     val records = mutableListOf<List<String>>()
     val field = StringBuilder()

@@ -19,7 +19,7 @@ fun decodeOfx(bytes: ByteArray): String {
         else -> "windows-1252"
     }
     val charset = runCatching { Charset.forName(name) }.getOrDefault(Charset.forName("windows-1252"))
-    return String(bytes, charset).removePrefix("﻿")
+    return String(bytes, charset).removePrefix("\uFEFF")
 }
 
 fun looksLikeOfx(text: String): Boolean = text.contains("<OFX>", ignoreCase = true)
