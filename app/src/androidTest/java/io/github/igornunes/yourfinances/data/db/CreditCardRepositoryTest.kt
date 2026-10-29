@@ -18,6 +18,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import io.github.igornunes.yourfinances.data.db.entity.toEntity
+import io.github.igornunes.yourfinances.domain.model.Frequency
+import io.github.igornunes.yourfinances.domain.model.Recurrence
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -110,5 +113,17 @@ class CreditCardRepositoryTest {
         cards.markPaid(InvoicePayment(empty.id, due, due))
         assertTrue(cards.delete(empty))
         assertTrue(database.invoicePaymentDao().observeAll().first().none { it.cardId == empty.id })
+    }
+
+    @Test
+    fun cardUsedByARecurrenceIsNotDeleted() = runTest {
+        val card = storedCard()
+        database.recurrenceDao().insert(
+            Recurrence(
+                type = EntryType.FIXED_EXPENSE, amountCents = 9990, description = "Academia", frequency = Frequency.MONTHLY,
+                dayOfMonth = 10, startsOn = LocalDate.of(2026, 3, 1), creditCardId = card.id,
+            ).toEntity(),
+        )
+        assertFalse(cards.delete(card))
     }
 }

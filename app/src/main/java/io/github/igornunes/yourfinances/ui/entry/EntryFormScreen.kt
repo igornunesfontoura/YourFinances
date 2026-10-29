@@ -65,6 +65,7 @@ fun EntryFormRoute(
         onApplyToUpcomingChange = viewModel::onApplyToUpcomingChange,
         onCardChange = viewModel::onCardChange,
         onPocketChange = viewModel::onPocketChange,
+        onCategoryChange = viewModel::onCategoryChange,
         onSave = viewModel::save,
         onDelete = viewModel::delete,
         onBack = onDone,
@@ -81,6 +82,7 @@ fun EntryFormScreen(
     onApplyToUpcomingChange: (Boolean) -> Unit,
     onCardChange: (Long?) -> Unit,
     onPocketChange: (Long?) -> Unit,
+    onCategoryChange: (Long?) -> Unit,
     onSave: () -> Unit,
     onDelete: () -> Unit,
     onBack: () -> Unit,
@@ -133,6 +135,16 @@ fun EntryFormScreen(
         if (state.showsPayment) {
             PaymentSelector(state.cards, state.cardId, onCardChange, enabled = valuesEnabled)
             state.cardDueDate?.let { HintText(stringResource(R.string.payment_card_due, formatShortDate(it))) }
+        }
+
+        if (state.showsCategory) {
+            ChoiceChips(
+                noneLabel = R.string.category_none,
+                options = state.typeCategories.map { it.id to it.name },
+                selectedId = state.categoryId,
+                onSelect = onCategoryChange,
+                enabled = valuesEnabled,
+            )
         }
 
         if (state.showsPocket) {

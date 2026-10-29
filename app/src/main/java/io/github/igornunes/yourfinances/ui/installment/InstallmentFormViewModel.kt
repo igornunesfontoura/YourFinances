@@ -2,12 +2,15 @@ package io.github.igornunes.yourfinances.ui.installment
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.igornunes.yourfinances.data.repository.CategoryRepository
 import io.github.igornunes.yourfinances.data.repository.CreditCardRepository
 import io.github.igornunes.yourfinances.data.repository.InstallmentRepository
 import io.github.igornunes.yourfinances.domain.card.dueDatesFrom
 import io.github.igornunes.yourfinances.domain.installment.MAX_INSTALLMENTS
 import io.github.igornunes.yourfinances.domain.installment.defaultFirstPayment
 import io.github.igornunes.yourfinances.domain.installment.monthlyPaymentDates
+import io.github.igornunes.yourfinances.domain.model.Category
+import io.github.igornunes.yourfinances.domain.model.CategoryKind
 import io.github.igornunes.yourfinances.domain.model.CreditCard
 import io.github.igornunes.yourfinances.domain.model.InstallmentPurchase
 import io.github.igornunes.yourfinances.domain.money.centsFromAmountDigits
@@ -34,6 +37,9 @@ data class InstallmentFormUiState(
     val firstPaymentEdited: Boolean = false,
     val cards: List<CreditCard> = emptyList(),
     val cardId: Long? = null,
+    /** Expense categories only: purchases are expenses. */
+    val categories: List<Category> = emptyList(),
+    val categoryId: Long? = null,
     val status: FormStatus = FormStatus(),
 ) {
     val card: CreditCard? get() = cards.find { it.id == cardId }
@@ -57,12 +63,21 @@ class InstallmentFormViewModel(
     private val installments: InstallmentRepository,
     cards: CreditCardRepository,
     clock: Clock,
+    categories: CategoryRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(InstallmentFormUiState(today = LocalDate.now(clock)))
     val state: StateFlow<InstallmentFormUiState> = _state.asStateFlow()
 
     init {
         viewModelScope.launch { cards.observeAll().collect { list -> _state.update { it.copy(cards = list) } } }
+        viewModelScope.launch {
+            categories.observeAll().collect { list ->
+                val expense = list.filter { it.kind == CategoryKind.EXPENSE }
+                _state.update { state ->
+                    state.copy(categories = expense, categoryId = state.categoryId.takeIf { id -> expense.any { it.id == id } })
+                }
+            }
+        }
     }
 
     private val updateStatus: ((FormStatus) -> FormStatus) -> Unit = { change ->
@@ -84,6 +99,8 @@ class InstallmentFormViewModel(
 
     fun onCardChange(cardId: Long?) = _state.update { it.copy(cardId = cardId) }
 
+    fun onCategoryChange(categoryId: Long?) = _state.update { it.copy(categoryId = categoryId) }
+
     fun onFirstPaymentChange(date: LocalDate) = _state.update { it.copy(firstPaymentOn = date, firstPaymentEdited = true) }
 
     fun save() {
@@ -97,6 +114,7 @@ class InstallmentFormViewModel(
             installmentCount = count,
             purchasedOn = current.purchasedOn,
             creditCardId = card?.id,
+            categoryId = current.categoryId,
         )
         persist(updateStatus) {
             if (card != null) {

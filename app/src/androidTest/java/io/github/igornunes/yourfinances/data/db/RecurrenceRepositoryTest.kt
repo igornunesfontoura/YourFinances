@@ -19,6 +19,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import io.github.igornunes.yourfinances.data.db.entity.toEntity
+import io.github.igornunes.yourfinances.domain.model.CreditCard
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -157,5 +160,14 @@ class RecurrenceRepositoryTest {
         val id = recurrences.add(streaming, window)
         recurrences.update(streaming.copy(id = id, endsOn = LocalDate.of(2026, 4, 30)), window)
         assertEquals(listOf(LocalDate.of(2026, 3, 31), LocalDate.of(2026, 4, 30)), all().map { it.paidOn })
+    }
+
+    @Test
+    fun recurrenceOnACardIsPaidOnTheInvoiceDueDate() = runTest {
+        val cardId = database.creditCardDao().insert(CreditCard(name = "Nubank", closingDay = 25, dueDay = 5).toEntity())
+        recurrences.add(streaming.copy(creditCardId = cardId), window)
+        val predicted = all()
+        assertEquals(setOf(cardId), predicted.map { it.creditCardId }.toSet())
+        assertTrue(predicted.all { it.paidOn.dayOfMonth == 5 && it.paidOn.isAfter(it.occurredOn) })
     }
 }

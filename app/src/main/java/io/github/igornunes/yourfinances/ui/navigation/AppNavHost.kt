@@ -12,6 +12,8 @@ import androidx.navigation.navArgument
 import io.github.igornunes.yourfinances.ui.card.CardDetailRoute
 import io.github.igornunes.yourfinances.ui.card.CardFormRoute
 import io.github.igornunes.yourfinances.ui.card.CardListRoute
+import io.github.igornunes.yourfinances.ui.category.CategoryFormRoute
+import io.github.igornunes.yourfinances.ui.category.CategoryListRoute
 import io.github.igornunes.yourfinances.ui.entry.EntryFormRoute
 import io.github.igornunes.yourfinances.ui.goal.InvestmentGoalFormRoute
 import io.github.igornunes.yourfinances.ui.home.HomeRoute
@@ -20,7 +22,9 @@ import io.github.igornunes.yourfinances.ui.installment.InstallmentListRoute
 import io.github.igornunes.yourfinances.ui.month.MonthRoute
 import io.github.igornunes.yourfinances.ui.recurrence.RecurrenceFormRoute
 import io.github.igornunes.yourfinances.ui.recurrence.RecurrenceListRoute
+import io.github.igornunes.yourfinances.ui.report.ReportsRoute
 import io.github.igornunes.yourfinances.ui.savings.PocketFormRoute
+import io.github.igornunes.yourfinances.ui.subscription.SubscriptionsRoute
 import io.github.igornunes.yourfinances.ui.savings.SavingsRoute
 import io.github.igornunes.yourfinances.ui.settings.SettingsRoute
 import java.time.YearMonth
@@ -39,6 +43,10 @@ private const val RECURRENCE = "recurrence?$ID={$ID}"
 private const val CARDS = "cards"
 private const val SETTINGS = "settings"
 private const val SAVINGS = "savings"
+private const val REPORTS = "reports"
+private const val SUBSCRIPTIONS = "subscriptions"
+private const val CATEGORIES = "categories"
+private const val CATEGORY_FORM = "categoryForm?$ID={$ID}"
 private const val POCKET_FORM = "pocketForm?$ID={$ID}"
 private const val CARD = "card/{$ID}"
 private const val CARD_FORM = "cardForm?$ID={$ID}"
@@ -60,6 +68,8 @@ private fun cardRoute(id: Long) = "card/$id"
 private fun cardFormRoute(id: Long? = null) = "cardForm?$ID=${id ?: NO_ID}"
 
 private fun pocketFormRoute(id: Long? = null) = "pocketForm?$ID=${id ?: NO_ID}"
+
+private fun categoryFormRoute(id: Long? = null) = "categoryForm?$ID=${id ?: NO_ID}"
 
 private val idArgument = listOf(navArgument(ID) { type = NavType.LongType; defaultValue = NO_ID })
 
@@ -92,8 +102,30 @@ fun AppNavHost(onDisableLock: () -> Unit) {
                 onOpenInstallments = { navController.navigateFrom(entry, INSTALLMENTS) },
                 onOpenCards = { navController.navigateFrom(entry, CARDS) },
                 onOpenSavings = { navController.navigateFrom(entry, SAVINGS) },
+                onOpenReports = { navController.navigateFrom(entry, REPORTS) },
+                onOpenSubscriptions = { navController.navigateFrom(entry, SUBSCRIPTIONS) },
+                onOpenCategories = { navController.navigateFrom(entry, CATEGORIES) },
                 onOpenSettings = { navController.navigateFrom(entry, SETTINGS) },
             )
+        }
+        composable(REPORTS) { entry ->
+            ReportsRoute(onBack = { navController.closeFrom(entry) })
+        }
+        composable(SUBSCRIPTIONS) { entry ->
+            SubscriptionsRoute(
+                onBack = { navController.closeFrom(entry) },
+                onOpenRecurrence = { id -> navController.navigateFrom(entry, recurrenceRoute(id)) },
+            )
+        }
+        composable(CATEGORIES) { entry ->
+            CategoryListRoute(
+                onBack = { navController.closeFrom(entry) },
+                onAdd = { navController.navigateFrom(entry, categoryFormRoute()) },
+                onOpen = { id -> navController.navigateFrom(entry, categoryFormRoute(id)) },
+            )
+        }
+        composable(CATEGORY_FORM, arguments = idArgument) { entry ->
+            CategoryFormRoute(categoryId = entry.optionalId(), onDone = { navController.closeFrom(entry) })
         }
         composable(SAVINGS) { entry ->
             SavingsRoute(

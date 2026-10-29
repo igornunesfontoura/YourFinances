@@ -1,5 +1,6 @@
 package io.github.igornunes.yourfinances.ui.installment
 
+import io.github.igornunes.yourfinances.testing.FakeCategoryRepository
 import io.github.igornunes.yourfinances.domain.installment.monthlyPaymentDates
 import io.github.igornunes.yourfinances.domain.model.CreditCard
 import io.github.igornunes.yourfinances.domain.model.EntryType
@@ -35,7 +36,7 @@ class InstallmentViewModelsTest {
 
     @Test
     fun `form previews the split and saves monthly installments`() = runTest {
-        val viewModel = InstallmentFormViewModel(repository, cards, clock)
+        val viewModel = InstallmentFormViewModel(repository, cards, clock, FakeCategoryRepository())
         assertEquals(LocalDate.of(2026, 4, 15), viewModel.state.value.firstPaymentOn)
 
         viewModel.onTotalChange("100000")
@@ -56,7 +57,7 @@ class InstallmentViewModelsTest {
 
     @Test
     fun `card purchase uses the due dates of consecutive invoices`() = runTest {
-        val viewModel = InstallmentFormViewModel(repository, cards, clock)
+        val viewModel = InstallmentFormViewModel(repository, cards, clock, FakeCategoryRepository())
         viewModel.onTotalChange("30000")
         viewModel.onCountChange("3")
         viewModel.onCardChange(1)
@@ -75,7 +76,7 @@ class InstallmentViewModelsTest {
 
     @Test
     fun `first payment follows the purchase date until edited`() {
-        val viewModel = InstallmentFormViewModel(repository, cards, clock)
+        val viewModel = InstallmentFormViewModel(repository, cards, clock, FakeCategoryRepository())
         viewModel.onPurchaseDateChange(LocalDate.of(2026, 1, 31))
         assertEquals(LocalDate.of(2026, 2, 28), viewModel.state.value.firstPaymentOn)
 
@@ -89,7 +90,7 @@ class InstallmentViewModelsTest {
 
     @Test
     fun `count must be between 2 and the maximum`() {
-        val viewModel = InstallmentFormViewModel(repository, cards, clock)
+        val viewModel = InstallmentFormViewModel(repository, cards, clock, FakeCategoryRepository())
         viewModel.onTotalChange("1000")
         listOf("1", "0", "121", "").forEach { count ->
             viewModel.onCountChange(count)

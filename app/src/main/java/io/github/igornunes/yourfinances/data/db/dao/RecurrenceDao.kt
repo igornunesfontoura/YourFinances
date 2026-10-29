@@ -13,6 +13,8 @@ import java.time.LocalDate
 
 @Dao
 interface RecurrenceDao {
+    @Query("SELECT COUNT(*) FROM recurrences WHERE credit_card_id = :cardId")
+    suspend fun countByCard(cardId: Long): Int
     @Insert
     suspend fun insert(recurrence: RecurrenceEntity): Long
 

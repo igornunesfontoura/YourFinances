@@ -2,6 +2,7 @@ package io.github.igornunes.yourfinances.data.db
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import io.github.igornunes.yourfinances.domain.model.CategoryKind
 
 /** v2: invoices can be marked as paid. */
 val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -52,4 +53,20 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
     }
 }
 
-val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+/**
+ * v5: categories are income or expense (the `type` column now holds a [CategoryKind] name) and
+ * expense categories may have a monthly limit; recurring expenses may be charged to a card.
+ */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("UPDATE `categories` SET `type` = 'EXPENSE' WHERE `type` <> 'INCOME'")
+        db.execSQL("ALTER TABLE `categories` ADD COLUMN `monthly_limit_cents` INTEGER DEFAULT NULL")
+        db.execSQL(
+            "ALTER TABLE `recurrences` ADD COLUMN `credit_card_id` INTEGER DEFAULT NULL " +
+                "REFERENCES `credit_cards`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_recurrences_credit_card_id` ON `recurrences` (`credit_card_id`)")
+    }
+}
+
+val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)

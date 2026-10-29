@@ -126,4 +126,13 @@ class EntryEditsTest {
         )
         assertEquals(predicted.copy(status = EntryStatus.CONFIRMED), predicted.confirmed())
     }
+
+    @Test
+    fun `categories only on types that have them, kept when editing without one`() {
+        val dinner = newEntry(EntryType.FLEXIBLE_EXPENSE, 4500, "", LocalDate.of(2026, 3, 10), null, categoryId = 3)
+        assertEquals(3L, dinner.categoryId)
+        assertEquals(3L, dinner.edited(EntryType.FIXED_EXPENSE, 4500, "", dinner.occurredOn, null).categoryId)
+        assertEquals(null, dinner.edited(EntryType.INVESTMENT, 4500, "", dinner.occurredOn, null).categoryId)
+        assertEquals(null, newEntry(EntryType.WITHDRAWAL, 1, "", dinner.occurredOn, null, categoryId = 3).categoryId)
+    }
 }

@@ -1,5 +1,6 @@
 package io.github.igornunes.yourfinances.data.db
 
+import io.github.igornunes.yourfinances.domain.model.CategoryKind
 import android.content.Context
 import android.database.sqlite.SQLiteConstraintException
 import androidx.room.Room
@@ -104,7 +105,7 @@ class EntryDaoTest {
 
     @Test
     fun deletingCategoryKeepsEntriesWithoutCategory() = runTest {
-        val category = Category(name = "Lazer", type = EntryType.FLEXIBLE_EXPENSE)
+        val category = Category(name = "Lazer", kind = CategoryKind.EXPENSE)
         val categoryId = database.categoryDao().insert(category.toEntity())
         val entryId = entries.add(entry(LocalDate.of(2026, 3, 1), categoryId = categoryId))
 

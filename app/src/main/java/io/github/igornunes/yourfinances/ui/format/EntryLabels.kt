@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import io.github.igornunes.yourfinances.R
+import io.github.igornunes.yourfinances.domain.model.CategoryKind
 import io.github.igornunes.yourfinances.domain.model.DateBasis
 import io.github.igornunes.yourfinances.domain.model.EntryType
 import io.github.igornunes.yourfinances.domain.model.Frequency
@@ -17,6 +18,13 @@ val EntryType.label: Int
         EntryType.FLEXIBLE_EXPENSE -> R.string.entry_type_flexible_expense
         EntryType.INVESTMENT -> R.string.entry_type_investment
         EntryType.WITHDRAWAL -> R.string.entry_type_withdrawal
+    }
+
+@get:StringRes
+val CategoryKind.label: Int
+    get() = when (this) {
+        CategoryKind.EXPENSE -> R.string.category_kind_expense
+        CategoryKind.INCOME -> R.string.category_kind_income
     }
 
 @get:StringRes

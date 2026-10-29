@@ -9,7 +9,8 @@ import java.time.LocalDate
 
 /**
  * A confirmed single entry. Paid when it happened, or, on a [card], on the due date of the
- * invoice it falls into. [savingsPocketId] only applies to contributions and withdrawals.
+ * invoice it falls into. [savingsPocketId] only applies to contributions and withdrawals, and
+ * [categoryId] only to types that have categories.
  */
 fun newEntry(
     type: EntryType,
@@ -18,6 +19,7 @@ fun newEntry(
     occurredOn: LocalDate,
     card: CreditCard?,
     savingsPocketId: Long? = null,
+    categoryId: Long? = null,
 ): Entry =
     Entry(
         type = type,
@@ -28,6 +30,7 @@ fun newEntry(
         status = EntryStatus.CONFIRMED,
         creditCardId = card?.id,
         savingsPocketId = savingsPocketId.takeIf { type.movesSavings },
+        categoryId = categoryId.takeIf { type.categoryKind != null },
     )
 
 /** The user checked a predicted entry against reality and kept its values. */
@@ -56,7 +59,8 @@ fun Entry.edited(
     description: String,
     occurredOn: LocalDate,
     card: CreditCard?,
-    savingsPocketId: Long? = null,
+    savingsPocketId: Long? = this.savingsPocketId,
+    categoryId: Long? = this.categoryId,
 ): Entry {
     val reviewed = copy(description = description.trim(), status = EntryStatus.CONFIRMED)
     if (!isQuickEditable) return reviewed
@@ -72,5 +76,6 @@ fun Entry.edited(
         },
         creditCardId = card?.id,
         savingsPocketId = savingsPocketId.takeIf { type.movesSavings },
+        categoryId = categoryId.takeIf { type.categoryKind != null },
     )
 }

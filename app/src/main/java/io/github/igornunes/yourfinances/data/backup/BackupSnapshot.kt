@@ -10,6 +10,7 @@ import io.github.igornunes.yourfinances.data.db.entity.RecurrenceEntity
 import io.github.igornunes.yourfinances.data.db.entity.RecurrenceSkipEntity
 import io.github.igornunes.yourfinances.data.db.entity.SavingsPocketEntity
 import io.github.igornunes.yourfinances.data.db.entity.toDomain
+import io.github.igornunes.yourfinances.domain.model.CategoryKind
 import io.github.igornunes.yourfinances.domain.model.EntryStatus
 import io.github.igornunes.yourfinances.domain.model.EntryType
 import io.github.igornunes.yourfinances.domain.model.Frequency
@@ -45,10 +46,12 @@ data class BackupTables(
  * The decrypted backup content: versioned JSON, independent of the Room schema. Dates are ISO
  * strings and money is in cents.
  *
- * Versions: 1 had an (always empty) `investments` list; 2 drops it and adds savings pockets.
+ * Versions: 1 had an (always empty) `investments` list; 2 drops it and adds savings pockets; 3
+ * adds category limits and cards on recurrences, and categories are `INCOME` or `EXPENSE` (older
+ * files hold an entry type there, read as its kind).
  */
 object BackupFormat {
-    const val VERSION = 2
+    const val VERSION = 3
 
     private val json = Json { encodeDefaults = true }
 
@@ -70,7 +73,7 @@ object BackupFormat {
             val text = bytes.toString(Charsets.UTF_8)
             val format = json.parseToJsonElement(text).jsonObject["format"]?.jsonPrimitive?.int
             val parser = when (format) {
-                VERSION -> json
+                VERSION, 2 -> json
                 1 -> jsonV1
                 else -> throw BackupInvalidException()
             }
@@ -91,6 +94,7 @@ object BackupFormat {
     }
 
     private fun BackupTables.validate() {
+        categories.forEach { it.toDomain() }
         // Pocket references are checked here so a bad file reads as invalid, not as a failed restore.
         val pocketIds = savingsPockets.map { it.id }.toSet()
         require((entries.mapNotNull { it.savingsPocketId } + recurrences.mapNotNull { it.savingsPocketId }).all { it in pocketIds }) {
@@ -124,7 +128,14 @@ private data class BackupSnapshot(
 )
 
 @Serializable
-private data class CategoryRow(val id: Long, val name: String, val type: EntryType)
+private data class CategoryRow(val id: Long, val name: String, val type: String, val monthlyLimitCents: Long? = null) {
+    val kind: CategoryKind
+        get() = when (type) {
+            "INCOME" -> CategoryKind.INCOME
+            "EXPENSE", "FIXED_EXPENSE", "FLEXIBLE_EXPENSE" -> CategoryKind.EXPENSE
+            else -> throw IllegalArgumentException("unknown category kind")
+        }
+}
 
 @Serializable
 private data class CreditCardRow(val id: Long, val name: String, val closingDay: Int, val dueDay: Int)
@@ -141,6 +152,7 @@ private data class RecurrenceRow(
     @Serializable(LocalDateSerializer::class) val endsOn: LocalDate?,
     val categoryId: Long?,
     val savingsPocketId: Long? = null,
+    val creditCardId: Long? = null,
 )
 
 @Serializable
@@ -196,12 +208,12 @@ private data class SavingsPocketRow(val id: Long, val name: String, val targetCe
 private fun BackupTables.toSnapshot(exportedOn: LocalDate) = BackupSnapshot(
     format = BackupFormat.VERSION,
     exportedOn = exportedOn,
-    categories = categories.map { CategoryRow(it.id, it.name, it.type) },
+    categories = categories.map { CategoryRow(it.id, it.name, it.kind.name, it.monthlyLimitCents) },
     creditCards = creditCards.map { CreditCardRow(it.id, it.name, it.closingDay, it.dueDay) },
     recurrences = recurrences.map {
         RecurrenceRow(
             it.id, it.type, it.amountCents, it.description, it.frequency, it.dayOfMonth, it.startsOn, it.endsOn,
-            it.categoryId, it.savingsPocketId,
+            it.categoryId, it.savingsPocketId, it.creditCardId,
         )
     },
     recurrenceSkips = recurrenceSkips.map { RecurrenceSkipRow(it.recurrenceId, it.slot) },
@@ -223,12 +235,12 @@ private fun BackupTables.toSnapshot(exportedOn: LocalDate) = BackupSnapshot(
 )
 
 private fun BackupSnapshot.toTables() = BackupTables(
-    categories = categories.map { CategoryEntity(it.id, it.name, it.type) },
+    categories = categories.map { CategoryEntity(it.id, it.name, it.kind, it.monthlyLimitCents) },
     creditCards = creditCards.map { CreditCardEntity(it.id, it.name, it.closingDay, it.dueDay) },
     recurrences = recurrences.map {
         RecurrenceEntity(
             it.id, it.type, it.amountCents, it.description, it.frequency, it.dayOfMonth, it.startsOn, it.endsOn,
-            it.categoryId, it.savingsPocketId,
+            it.categoryId, it.savingsPocketId, it.creditCardId,
         )
     },
     recurrenceSkips = recurrenceSkips.map { RecurrenceSkipEntity(it.recurrenceId, it.slot) },

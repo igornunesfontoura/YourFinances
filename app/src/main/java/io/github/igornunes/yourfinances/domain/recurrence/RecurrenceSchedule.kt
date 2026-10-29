@@ -1,5 +1,7 @@
 package io.github.igornunes.yourfinances.domain.recurrence
 
+import io.github.igornunes.yourfinances.domain.card.paymentDateFor
+import io.github.igornunes.yourfinances.domain.model.CreditCard
 import io.github.igornunes.yourfinances.domain.model.Entry
 import io.github.igornunes.yourfinances.domain.model.EntryStatus
 import io.github.igornunes.yourfinances.domain.model.Frequency
@@ -35,12 +37,17 @@ fun Recurrence.occurrencesBetween(from: LocalDate, to: LocalDate): List<LocalDat
  * yearly recurrences) already has a slot, so changing [Recurrence.dayOfMonth] never generates a
  * second entry for the same period. For yearly recurrences only slots in the month of
  * [Recurrence.startsOn] count: slots left by a former monthly schedule do not use up the year.
+ *
+ * [card] must be the recurrence's card when it has one: each entry is then paid on the due date of
+ * the invoice its occurrence falls into.
  */
 fun Recurrence.predictedEntriesBetween(
     from: LocalDate,
     to: LocalDate,
     alreadyScheduled: Set<LocalDate> = emptySet(),
+    card: CreditCard? = null,
 ): List<Entry> {
+    require(card?.id == creditCardId) { "card does not match the recurrence" }
     val usedPeriods = alreadyScheduled
         .filter { frequency == Frequency.MONTHLY || it.month == startsOn.month }
         .map { periodOf(it) }
@@ -53,12 +60,13 @@ fun Recurrence.predictedEntriesBetween(
                 amountCents = amountCents,
                 description = description,
                 occurredOn = date,
-                paidOn = date,
+                paidOn = card?.paymentDateFor(date) ?: date,
                 status = EntryStatus.PREDICTED,
                 categoryId = categoryId,
                 recurrenceId = id,
                 scheduledFor = date,
                 savingsPocketId = savingsPocketId,
+                creditCardId = creditCardId,
             )
         }
 }

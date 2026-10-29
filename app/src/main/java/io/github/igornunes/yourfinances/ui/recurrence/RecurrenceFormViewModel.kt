@@ -2,8 +2,12 @@ package io.github.igornunes.yourfinances.ui.recurrence
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.igornunes.yourfinances.data.repository.CategoryRepository
+import io.github.igornunes.yourfinances.data.repository.CreditCardRepository
 import io.github.igornunes.yourfinances.data.repository.RecurrenceRepository
 import io.github.igornunes.yourfinances.data.repository.SavingsRepository
+import io.github.igornunes.yourfinances.domain.model.Category
+import io.github.igornunes.yourfinances.domain.model.CreditCard
 import io.github.igornunes.yourfinances.domain.model.EntryType
 import io.github.igornunes.yourfinances.domain.model.Frequency
 import io.github.igornunes.yourfinances.domain.model.Recurrence
@@ -34,9 +38,16 @@ data class RecurrenceFormUiState(
     val endsOn: LocalDate? = null,
     val pockets: List<SavingsPocket> = emptyList(),
     val pocketId: Long? = null,
+    val categories: List<Category> = emptyList(),
+    val categoryId: Long? = null,
+    val cards: List<CreditCard> = emptyList(),
+    val cardId: Long? = null,
     val status: FormStatus = FormStatus(),
 ) {
     val showsPocket: Boolean get() = type.movesSavings && pockets.isNotEmpty()
+    val typeCategories: List<Category> get() = categories.filter { it.kind == type.categoryKind }
+    val showsCategory: Boolean get() = typeCategories.isNotEmpty()
+    val showsPayment: Boolean get() = type.canUseCard && cards.isNotEmpty()
     val amountCents: Long get() = centsFromAmountDigits(amountDigits)
     val dayOfMonth: Int? get() = dayText.toIntOrNull()?.takeIf { it in 1..31 }
     val endsBeforeStart: Boolean get() = endsOn != null && endsOn.isBefore(startsOn)
@@ -50,6 +61,8 @@ class RecurrenceFormViewModel(
     private val recurrences: RecurrenceRepository,
     private val clock: Clock,
     savings: SavingsRepository,
+    categories: CategoryRepository,
+    cards: CreditCardRepository,
 ) : ViewModel() {
     private var original: Recurrence? = null
 
@@ -67,6 +80,18 @@ class RecurrenceFormViewModel(
                 _state.update { state -> state.copy(pockets = list, pocketId = state.pocketId.takeIf { id -> list.any { it.id == id } }) }
             }
         }
+        viewModelScope.launch {
+            categories.observeAll().collect { list ->
+                _state.update { state ->
+                    state.copy(categories = list, categoryId = state.categoryId.takeIf { id -> list.any { it.id == id } })
+                }
+            }
+        }
+        viewModelScope.launch {
+            cards.observeAll().collect { list ->
+                _state.update { state -> state.copy(cards = list, cardId = state.cardId.takeIf { id -> list.any { it.id == id } }) }
+            }
+        }
         if (recurrenceId != null) {
             load(updateStatus, read = { recurrences.getById(recurrenceId) }) { recurrence ->
                 original = recurrence
@@ -80,6 +105,8 @@ class RecurrenceFormViewModel(
                         startsOn = recurrence.startsOn,
                         endsOn = recurrence.endsOn,
                         pocketId = recurrence.savingsPocketId,
+                        categoryId = recurrence.categoryId,
+                        cardId = recurrence.creditCardId,
                     )
                 }
             }
@@ -89,10 +116,19 @@ class RecurrenceFormViewModel(
     fun onAmountChange(input: String) = _state.update { it.copy(amountDigits = normalizeAmountDigits(input)) }
 
     fun onTypeChange(type: EntryType) = _state.update {
-        it.copy(type = type, pocketId = it.pocketId.takeIf { type.movesSavings })
+        it.copy(
+            type = type,
+            pocketId = it.pocketId.takeIf { type.movesSavings },
+            categoryId = it.categoryId.takeIf { _ -> type.categoryKind == it.type.categoryKind },
+            cardId = it.cardId.takeIf { type.canUseCard },
+        )
     }
 
     fun onPocketChange(pocketId: Long?) = _state.update { it.copy(pocketId = pocketId) }
+
+    fun onCategoryChange(categoryId: Long?) = _state.update { it.copy(categoryId = categoryId) }
+
+    fun onCardChange(cardId: Long?) = _state.update { it.copy(cardId = cardId) }
 
     fun onDescriptionChange(description: String) = _state.update { it.copy(description = description) }
 
@@ -117,8 +153,9 @@ class RecurrenceFormViewModel(
             dayOfMonth = day,
             startsOn = current.startsOn,
             endsOn = current.endsOn,
-            categoryId = original?.categoryId,
+            categoryId = current.categoryId.takeIf { current.type.categoryKind != null },
             savingsPocketId = current.pocketId.takeIf { current.type.movesSavings },
+            creditCardId = current.cardId.takeIf { current.type.canUseCard },
         )
         val window = predictionWindow(LocalDate.now(clock))
         persist(updateStatus) {

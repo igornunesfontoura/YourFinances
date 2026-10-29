@@ -1,5 +1,6 @@
 package io.github.igornunes.yourfinances.data.db
 
+import io.github.igornunes.yourfinances.domain.model.CategoryKind
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
@@ -44,7 +45,7 @@ class BackupDaoTest {
     )
 
     private val tables = BackupTables(
-        categories = listOf(CategoryEntity(1, "Casa", EntryType.FIXED_EXPENSE)),
+        categories = listOf(CategoryEntity(1, "Casa", CategoryKind.EXPENSE)),
         creditCards = listOf(CreditCardEntity(2, "Nubank", 25, 5)),
         recurrences = listOf(RecurrenceEntity(3, EntryType.FIXED_EXPENSE, 5990, "Internet", Frequency.MONTHLY, 5, march5, null, 1)),
         recurrenceSkips = listOf(RecurrenceSkipEntity(3, LocalDate.of(2026, 4, 5))),

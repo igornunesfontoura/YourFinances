@@ -29,7 +29,7 @@ interface CreditCardRepository {
      */
     suspend fun update(card: CreditCard, today: LocalDate)
 
-    /** Deletes the card; returns false, changing nothing, when anything was charged to it. */
+    /** Deletes the card; returns false, changing nothing, when anything is or will be charged to it. */
     suspend fun delete(card: CreditCard): Boolean
 
     suspend fun markPaid(payment: InvoicePayment)
@@ -42,6 +42,7 @@ class RoomCreditCardRepository(private val database: AppDatabase) : CreditCardRe
     private val entryDao = database.entryDao()
     private val purchaseDao = database.installmentPurchaseDao()
     private val paymentDao = database.invoicePaymentDao()
+    private val recurrenceDao = database.recurrenceDao()
 
     override fun observeAll(): Flow<List<CreditCard>> = cardDao.observeAll().map { list -> list.map { it.toDomain() } }
 
@@ -69,7 +70,8 @@ class RoomCreditCardRepository(private val database: AppDatabase) : CreditCardRe
     }
 
     override suspend fun delete(card: CreditCard): Boolean = database.withTransaction {
-        if (entryDao.countByCard(card.id) > 0 || purchaseDao.countByCard(card.id) > 0) return@withTransaction false
+        val used = entryDao.countByCard(card.id) + purchaseDao.countByCard(card.id) + recurrenceDao.countByCard(card.id)
+        if (used > 0) return@withTransaction false
         cardDao.delete(card.toEntity())
         true
     }

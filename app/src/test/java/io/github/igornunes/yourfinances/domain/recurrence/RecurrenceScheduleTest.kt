@@ -174,4 +174,20 @@ class RecurrenceScheduleTest {
             )
         }
     }
+
+    @Test
+    fun `a recurring expense on a card is paid on its invoice due date`() {
+        val card = io.github.igornunes.yourfinances.domain.model.CreditCard(id = 4, name = "Nubank", closingDay = 25, dueDay = 5)
+        val gym = Recurrence(
+            id = 9, type = EntryType.FIXED_EXPENSE, amountCents = 9990, description = "Academia", frequency = Frequency.MONTHLY,
+            dayOfMonth = 28, startsOn = LocalDate.of(2026, 1, 1), creditCardId = 4,
+        )
+        val entries = gym.predictedEntriesBetween(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 2, 28), card = card)
+        // After the 25th closing: next invoice, due on the 5th of the month after.
+        assertEquals(listOf(LocalDate.of(2026, 3, 5), LocalDate.of(2026, 4, 5)), entries.map { it.paidOn })
+        assertEquals(listOf(4L, 4L), entries.map { it.creditCardId })
+        org.junit.jupiter.api.assertThrows<IllegalArgumentException> {
+            gym.predictedEntriesBetween(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 2, 28))
+        }
+    }
 }

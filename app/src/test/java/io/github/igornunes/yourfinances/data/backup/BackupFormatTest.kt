@@ -1,5 +1,6 @@
 package io.github.igornunes.yourfinances.data.backup
 
+import io.github.igornunes.yourfinances.domain.model.CategoryKind
 import io.github.igornunes.yourfinances.data.db.entity.CategoryEntity
 import io.github.igornunes.yourfinances.data.db.entity.CreditCardEntity
 import io.github.igornunes.yourfinances.data.db.entity.EntryEntity
@@ -30,7 +31,7 @@ class BackupFormatTest {
     )
 
     private val tables = BackupTables(
-        categories = listOf(CategoryEntity(1, "Lazer", EntryType.FLEXIBLE_EXPENSE)),
+        categories = listOf(CategoryEntity(1, "Lazer", CategoryKind.EXPENSE, 50000)),
         creditCards = listOf(CreditCardEntity(2, "Nubank", 25, 5)),
         recurrences = listOf(
             RecurrenceEntity(3, EntryType.FIXED_EXPENSE, 5990, "Internet", Frequency.MONTHLY, 31, march5, null, null),
@@ -65,13 +66,14 @@ class BackupFormatTest {
     fun `the format is plain and stable`() {
         val json = json()
         listOf(
-            "\"format\":2",
+            "\"format\":3",
             "\"exportedOn\":\"2026-10-28\"",
             "\"occurredOn\":\"2026-03-05\"",
             "\"amountCents\":4590",
             "\"startsIn\":\"2026-03\"",
             "\"savingsPocketId\":6",
             "\"targetCents\":null",
+            "\"type\":\"EXPENSE\",\"monthlyLimitCents\":50000",
             "\"type\":\"FLEXIBLE_EXPENSE\"",
             "\"endsOn\":null",
         ).forEach { assertTrue(json.contains(it), it) }
@@ -79,7 +81,7 @@ class BackupFormatTest {
 
     @Test
     fun `newer formats are refused`() {
-        assertThrows<BackupInvalidException> { decode(json().replace("\"format\":2", "\"format\":3")) }
+        assertThrows<BackupInvalidException> { decode(json().replace("\"format\":3", "\"format\":4")) }
     }
 
     @Test
@@ -101,7 +103,7 @@ class BackupFormatTest {
         assertThrows<BackupInvalidException> { decode("not json") }
         assertThrows<BackupInvalidException> { decode(json().replace("2026-03-05", "2026-13-05")) }
         assertThrows<BackupInvalidException> { decode(json().replace("\"FLEXIBLE_EXPENSE\"", "\"GIFT\"")) }
-        assertThrows<BackupInvalidException> { decode(json().replace("{\"format\":2,", "{\"format\":2,\"extra\":true,")) }
+        assertThrows<BackupInvalidException> { decode(json().replace("{\"format\":3,", "{\"format\":3,\"extra\":true,")) }
     }
 
     @Test
@@ -117,5 +119,13 @@ class BackupFormatTest {
         assertEquals(null, tables.entries.single().savingsPocketId)
         assertEquals(emptyList<SavingsPocketEntity>(), tables.savingsPockets)
         assertEquals(1, tables.investmentGoals.size)
+    }
+
+    @Test
+    fun `version 2 categories, typed by entry type, read as their kind`() {
+        val v2 = json().replace("\"format\":3", "\"format\":2")
+            .replace("\"type\":\"EXPENSE\",\"monthlyLimitCents\":50000", "\"type\":\"FLEXIBLE_EXPENSE\"")
+        assertEquals(CategoryKind.EXPENSE, decode(v2).categories.single().kind)
+        assertThrows<BackupInvalidException> { decode(json().replace("\"type\":\"EXPENSE\"", "\"type\":\"GIFT\"")) }
     }
 }

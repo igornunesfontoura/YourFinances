@@ -21,6 +21,11 @@ fun formatCents(cents: Long): String =
 
 fun formatMonth(month: YearMonth): String = month.format(monthFormatter).capitalized()
 
+private val shortMonthFormatter = DateTimeFormatter.ofPattern("MMM", PT_BR)
+
+/** "out", for chart axes. */
+fun formatShortMonth(month: YearMonth): String = month.format(shortMonthFormatter).removeSuffix(".")
+
 /** "outubro de 2026", for the middle of a sentence. */
 fun formatMonthInSentence(month: YearMonth): String = month.format(monthFormatter)
 

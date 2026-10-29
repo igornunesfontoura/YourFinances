@@ -19,6 +19,9 @@ interface CategoryDao {
     @Delete
     suspend fun delete(category: CategoryEntity)
 
-    @Query("SELECT * FROM categories ORDER BY name")
+    @Query("SELECT * FROM categories WHERE id = :id")
+    suspend fun getById(id: Long): CategoryEntity?
+
+    @Query("SELECT * FROM categories ORDER BY name COLLATE NOCASE")
     fun observeAll(): Flow<List<CategoryEntity>>
 }

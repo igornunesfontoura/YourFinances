@@ -21,6 +21,7 @@ import io.github.igornunes.yourfinances.ui.components.ErrorText
 import io.github.igornunes.yourfinances.ui.components.FormScaffold
 import io.github.igornunes.yourfinances.ui.components.HintText
 import io.github.igornunes.yourfinances.ui.components.NumberField
+import io.github.igornunes.yourfinances.ui.components.ChoiceChips
 import io.github.igornunes.yourfinances.ui.components.PaymentSelector
 import io.github.igornunes.yourfinances.ui.format.formatCents
 import io.github.igornunes.yourfinances.ui.format.formatShortDate
@@ -66,6 +67,9 @@ fun InstallmentFormRoute(onDone: () -> Unit, viewModel: InstallmentFormViewModel
         }
         DateChip(state.purchasedOn, state.today, R.string.installment_purchased_on, enabled, viewModel::onPurchaseDateChange)
         if (state.cards.isNotEmpty()) PaymentSelector(state.cards, state.cardId, viewModel::onCardChange, enabled)
+        if (state.categories.isNotEmpty()) {
+            ChoiceChips(R.string.category_none, state.categories.map { it.id to it.name }, state.categoryId, viewModel::onCategoryChange, enabled)
+        }
         if (state.card == null) {
             DateChip(state.firstPaymentOn, state.today, R.string.installment_first_payment, enabled, viewModel::onFirstPaymentChange)
         }

@@ -22,6 +22,14 @@ enum class EntryType {
 
     /** Money arriving to the user's cash: income and withdrawals. */
     val isInflow: Boolean get() = this == INCOME || this == WITHDRAWAL
+
+    /** The categories this type can use; savings movements use pockets instead. */
+    val categoryKind: CategoryKind?
+        get() = when (this) {
+            INCOME -> CategoryKind.INCOME
+            FIXED_EXPENSE, FLEXIBLE_EXPENSE -> CategoryKind.EXPENSE
+            INVESTMENT, WITHDRAWAL -> null
+        }
 }
 
 enum class EntryStatus { PREDICTED, CONFIRMED }

@@ -8,6 +8,7 @@ import io.github.igornunes.yourfinances.data.db.entity.InvestmentGoalEntity
 import io.github.igornunes.yourfinances.data.db.entity.SavingsPocketEntity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import io.github.igornunes.yourfinances.domain.model.CategoryKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -103,6 +104,33 @@ class MigrationTest {
             // RESTRICT holds on the migrated table: a pocket in use cannot be deleted.
             val deleted = runCatching { database.savingsPocketDao().delete(SavingsPocketEntity(pocketId, "Reserva", null)) }
             assertTrue(deleted.isFailure)
+        } finally {
+            database.close()
+        }
+    }
+
+    @Test
+    fun migrate4To5TurnsCategoryTypesIntoKinds() = runTest {
+        helper.createDatabase(name, 4).apply {
+            execSQL("INSERT INTO categories (id, name, type) VALUES (1, 'Mercado', 'FLEXIBLE_EXPENSE')")
+            execSQL("INSERT INTO categories (id, name, type) VALUES (2, 'Salário', 'INCOME')")
+            execSQL("INSERT INTO credit_cards (id, name, closing_day, due_day) VALUES (1, 'Nubank', 25, 5)")
+            close()
+        }
+
+        helper.runMigrationsAndValidate(name, 5, true, MIGRATION_4_5).close()
+
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val database = Room.databaseBuilder(context, AppDatabase::class.java, name)
+            .addMigrations(*ALL_MIGRATIONS)
+            .build()
+        try {
+            val categories = database.categoryDao().observeAll().first().associateBy { it.id }
+            assertEquals(CategoryKind.EXPENSE, categories.getValue(1).kind)
+            assertEquals(CategoryKind.INCOME, categories.getValue(2).kind)
+            assertEquals(null, categories.getValue(1).monthlyLimitCents)
+            // Migrated databases are not seeded: only the user's two categories are there.
+            assertEquals(2, categories.size)
         } finally {
             database.close()
         }

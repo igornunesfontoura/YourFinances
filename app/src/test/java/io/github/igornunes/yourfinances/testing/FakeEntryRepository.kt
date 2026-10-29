@@ -15,8 +15,8 @@ class FakeEntryRepository(initial: List<Entry> = emptyList()) : EntryRepository 
     var failWrites = false
     private var nextId = (initial.maxOfOrNull { it.id } ?: 0) + 1
 
-    override fun observeMonth(month: YearMonth, basis: DateBasis): Flow<List<Entry>> =
-        entries.map { list -> list.filter { YearMonth.from(basis.dateOf(it)) == month } }
+    override fun observeMonths(first: YearMonth, last: YearMonth, basis: DateBasis): Flow<List<Entry>> =
+        entries.map { list -> list.filter { YearMonth.from(basis.dateOf(it)) in first..last } }
 
     override suspend fun getById(id: Long): Entry? = entries.value.find { it.id == id }
 

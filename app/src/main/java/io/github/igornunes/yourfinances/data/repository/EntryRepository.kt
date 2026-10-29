@@ -13,7 +13,10 @@ import java.time.YearMonth
 
 /** Entries as the UI sees them. */
 interface EntryRepository {
-    fun observeMonth(month: YearMonth, basis: DateBasis): Flow<List<Entry>>
+    fun observeMonth(month: YearMonth, basis: DateBasis): Flow<List<Entry>> = observeMonths(month, month, basis)
+
+    /** Entries of the months [first]..[last], inclusive. */
+    fun observeMonths(first: YearMonth, last: YearMonth, basis: DateBasis): Flow<List<Entry>>
 
     suspend fun getById(id: Long): Entry?
 
@@ -28,9 +31,9 @@ class RoomEntryRepository(private val database: AppDatabase) : EntryRepository {
     private val entryDao = database.entryDao()
     private val recurrenceDao = database.recurrenceDao()
 
-    override fun observeMonth(month: YearMonth, basis: DateBasis): Flow<List<Entry>> {
-        val from = month.atDay(1)
-        val to = month.atEndOfMonth()
+    override fun observeMonths(first: YearMonth, last: YearMonth, basis: DateBasis): Flow<List<Entry>> {
+        val from = first.atDay(1)
+        val to = last.atEndOfMonth()
         val entities = when (basis) {
             DateBasis.ACCRUAL -> entryDao.observeOccurredBetween(from, to)
             DateBasis.CASH -> entryDao.observePaidBetween(from, to)

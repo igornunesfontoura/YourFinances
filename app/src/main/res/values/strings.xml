@@ -168,6 +168,45 @@
     <string name="pocket_delete_confirm_title">Excluir caixinha?</string>
     <string name="pocket_delete_confirm_message">Só é possível excluir caixinhas sem aportes nem resgates.</string>
 
+    <!-- Categories -->
+    <string name="categories_title">Categorias</string>
+    <string name="category_none">Sem categoria</string>
+    <string name="category_add">Nova categoria</string>
+    <string name="category_new_title">Nova categoria</string>
+    <string name="category_edit_title">Editar categoria</string>
+    <string name="category_name">Nome</string>
+    <string name="category_kind_expense">Saídas</string>
+    <string name="category_kind_income">Entradas</string>
+    <string name="category_limit">Limite por mês (opcional)</string>
+    <string name="category_limit_hint">Serve de referência nos relatórios; não muda o quanto ainda pode gastar.</string>
+    <string name="category_limit_of">Limite de %1$s por mês</string>
+    <string name="category_delete_confirm_title">Excluir categoria?</string>
+    <string name="category_delete_confirm_message">Os lançamentos desta categoria continuam no histórico, sem categoria.</string>
+
+    <!-- Reports -->
+    <string name="reports_title">Relatórios</string>
+    <string name="reports_by_category">Saídas por categoria</string>
+    <string name="reports_basis_hint">Por competência, com as saídas previstas do mês.</string>
+    <string name="reports_no_expenses">Nenhuma saída neste mês.</string>
+    <string name="reports_of_limit">de %1$s</string>
+    <string name="reports_over_limit">Acima do limite de %1$s</string>
+    <string name="reports_evolution">Últimos 12 meses</string>
+    <string name="reports_month_line">Entradas %1$s · saídas %2$s</string>
+    <string name="reports_chart_description">Gráfico de entradas e saídas dos últimos 12 meses. Os valores estão na lista abaixo.</string>
+
+    <!-- Subscriptions -->
+    <string name="subscriptions_title">Assinaturas e contas</string>
+    <string name="subscriptions_per_month">Por mês, em média</string>
+    <string name="subscriptions_per_year">%1$s por ano</string>
+    <string name="subscriptions_hint">Recorrências de saídas fixas ativas. As anuais entram divididas por 12.</string>
+    <string name="subscriptions_empty">Nenhuma saída fixa recorrente. Cadastre em Recorrências.</string>
+    <string name="subscription_monthly">Mensal</string>
+    <string name="subscription_yearly">Anual</string>
+    <string name="subscription_next">Próxima em %1$s</string>
+    <string name="subscription_no_next">Sem próximas cobranças</string>
+    <string name="subscription_untitled">Saída fixa</string>
+    <string name="recurrence_card_hint">Cada ocorrência entra na fatura em que cair, como uma compra no cartão.</string>
+
     <!-- Lock -->
     <string name="lock_title">Your Finances está bloqueado</string>
     <string name="lock_unlock">Desbloquear</string>
@@ -221,6 +260,25 @@
     <string name="recovery_start_over_hint">Sem backup, só é possível apagar os dados que não podem mais ser abertos e começar com o app vazio.</string>
     <string name="recovery_start_over_confirm_title">Apagar os dados e começar do zero?</string>
     <string name="recovery_start_over_confirm_message">Os dados que não podem mais ser abertos serão apagados para sempre.</string>
+
+    <!-- Default categories: only seeded into a new database, then they are the user's data. -->
+    <string-array name="default_expense_categories">
+        <item>Moradia</item>
+        <item>Contas da casa</item>
+        <item>Mercado</item>
+        <item>Restaurantes</item>
+        <item>Transporte</item>
+        <item>Saúde</item>
+        <item>Educação</item>
+        <item>Lazer</item>
+        <item>Compras</item>
+        <item>Assinaturas</item>
+        <item>Outros</item>
+    </string-array>
+    <string-array name="default_income_categories">
+        <item>Salário</item>
+        <item>Renda extra</item>
+    </string-array>
 
     <string name="action_continue">Continuar</string>
     <string name="action_clear">Limpar</string>

@@ -51,6 +51,7 @@ interface RecurrenceRepository {
 class RoomRecurrenceRepository(private val database: AppDatabase) : RecurrenceRepository {
     private val recurrenceDao = database.recurrenceDao()
     private val entryDao = database.entryDao()
+    private val cardDao = database.creditCardDao()
 
     override fun observeAll(): Flow<List<Recurrence>> =
         recurrenceDao.observeAll().map { list -> list.map { it.toDomain() } }
@@ -102,7 +103,8 @@ class RoomRecurrenceRepository(private val database: AppDatabase) : RecurrenceRe
     private suspend fun predict(recurrence: Recurrence, from: LocalDate, to: LocalDate): Int {
         if (from.isAfter(to)) return 0
         val usedSlots = entryDao.scheduledDates(recurrence.id) + recurrenceDao.skippedSlots(recurrence.id)
-        val entries = recurrence.predictedEntriesBetween(from, to, usedSlots.toSet())
+        val card = recurrence.creditCardId?.let { requireNotNull(cardDao.getById(it)).toDomain() }
+        val entries = recurrence.predictedEntriesBetween(from, to, usedSlots.toSet(), card)
         entryDao.insertAll(entries.map { it.toEntity() })
         return entries.size
     }

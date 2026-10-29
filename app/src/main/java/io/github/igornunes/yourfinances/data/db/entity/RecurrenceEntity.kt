@@ -25,8 +25,14 @@ import java.time.LocalDate
             childColumns = ["savings_pocket_id"],
             onDelete = ForeignKey.RESTRICT,
         ),
+        ForeignKey(
+            entity = CreditCardEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["credit_card_id"],
+            onDelete = ForeignKey.RESTRICT,
+        ),
     ],
-    indices = [Index("category_id"), Index("savings_pocket_id")],
+    indices = [Index("category_id"), Index("savings_pocket_id"), Index("credit_card_id")],
 )
 data class RecurrenceEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -39,6 +45,7 @@ data class RecurrenceEntity(
     @ColumnInfo(name = "ends_on") val endsOn: LocalDate?,
     @ColumnInfo(name = "category_id") val categoryId: Long?,
     @ColumnInfo(name = "savings_pocket_id") val savingsPocketId: Long? = null,
+    @ColumnInfo(name = "credit_card_id") val creditCardId: Long? = null,
 )
 
 fun RecurrenceEntity.toDomain() = Recurrence(
@@ -52,6 +59,7 @@ fun RecurrenceEntity.toDomain() = Recurrence(
     endsOn = endsOn,
     categoryId = categoryId,
     savingsPocketId = savingsPocketId,
+    creditCardId = creditCardId,
 )
 
 fun Recurrence.toEntity() = RecurrenceEntity(
@@ -65,4 +73,5 @@ fun Recurrence.toEntity() = RecurrenceEntity(
     endsOn = endsOn,
     categoryId = categoryId,
     savingsPocketId = savingsPocketId,
+    creditCardId = creditCardId,
 )

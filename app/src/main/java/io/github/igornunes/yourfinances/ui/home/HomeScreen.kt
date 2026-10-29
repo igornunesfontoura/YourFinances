@@ -55,6 +55,9 @@ fun HomeRoute(
     onOpenInstallments: () -> Unit,
     onOpenCards: () -> Unit,
     onOpenSavings: () -> Unit,
+    onOpenReports: () -> Unit,
+    onOpenSubscriptions: () -> Unit,
+    onOpenCategories: () -> Unit,
     onOpenSettings: () -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
@@ -70,6 +73,9 @@ fun HomeRoute(
         onOpenInstallments = onOpenInstallments,
         onOpenCards = onOpenCards,
         onOpenSavings = onOpenSavings,
+        onOpenReports = onOpenReports,
+        onOpenSubscriptions = onOpenSubscriptions,
+        onOpenCategories = onOpenCategories,
         onOpenSettings = onOpenSettings,
     )
 }
@@ -87,6 +93,9 @@ fun HomeScreen(
     onOpenInstallments: () -> Unit,
     onOpenCards: () -> Unit,
     onOpenSavings: () -> Unit,
+    onOpenReports: () -> Unit,
+    onOpenSubscriptions: () -> Unit,
+    onOpenCategories: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
@@ -109,10 +118,13 @@ fun HomeScreen(
                         }
                         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                             listOf(
+                                R.string.reports_title to onOpenReports,
+                                R.string.savings_title to onOpenSavings,
+                                R.string.subscriptions_title to onOpenSubscriptions,
                                 R.string.recurrences_title to onOpenRecurrences,
                                 R.string.installments_title to onOpenInstallments,
-                                R.string.savings_title to onOpenSavings,
                                 R.string.cards_title to onOpenCards,
+                                R.string.categories_title to onOpenCategories,
                                 R.string.settings_title to onOpenSettings,
                             ).forEach { (label, open) ->
                                 DropdownMenuItem(

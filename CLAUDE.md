@@ -65,10 +65,17 @@ Relatórios precisam deixar claro se usam competência ou caixa.
 - A competência (`occurredOn`) de cada parcela é a data em que ela vence, para o orçamento mensal refletir o peso de cada mês. A data real da compra fica em `InstallmentPurchase.purchasedOn`.
 - O app deve conseguir responder: quando cada parcelamento termina e quanto do futuro já está comprometido por mês.
 
+### Categorias e orçamento
+- Categorias são de entrada (`INCOME`) ou de saída (`EXPENSE`); aportes e resgates usam caixinhas, não categorias.
+- Banco novo começa com uma lista padrão de categorias, que o usuário edita ou exclui. Excluir deixa os lançamentos sem categoria.
+- Categorias de saída podem ter limite mensal: é só referência nos relatórios, não altera o "disponível".
+- Relatórios usam competência, como a tela principal, e incluem saídas previstas.
+
 ### Cartão de crédito
 - Cada cartão tem dia de fechamento e dia de vencimento.
 - Compra feita após o fechamento cai na fatura do mês seguinte.
 - A fatura é a soma dos lançamentos daquele ciclo; seu pagamento é o evento de caixa.
+- Recorrências de saída podem ser no cartão: cada ocorrência entra na fatura em que cair.
 
 ### "Quanto ainda posso gastar" (tela principal)
 ```
@@ -128,7 +135,7 @@ A meta reserva o dinheiro antes mesmo do aporte; aportar além dela reserva mais
 5. [x] Tela "quanto ainda posso gastar"
 6. [x] SQLCipher, bloqueio biométrico, backup criptografado e exportação CSV
 7. [x] Dinheiro guardado: caixinhas, aportes e resgates (sem rendimentos)
-8. [ ] Orçamento por categoria, gráficos e painel de assinaturas
+8. [x] Orçamento por categoria, gráficos e painel de assinaturas
 9. [ ] Importação de extrato (OFX/CSV)
 
 Atualize os checkboxes conforme as etapas forem concluídas.

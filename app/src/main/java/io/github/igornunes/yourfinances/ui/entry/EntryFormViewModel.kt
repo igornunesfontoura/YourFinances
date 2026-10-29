@@ -2,6 +2,7 @@ package io.github.igornunes.yourfinances.ui.entry
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.igornunes.yourfinances.data.repository.CategoryRepository
 import io.github.igornunes.yourfinances.data.repository.CreditCardRepository
 import io.github.igornunes.yourfinances.data.repository.EntryRepository
 import io.github.igornunes.yourfinances.data.repository.InstallmentRepository
@@ -12,6 +13,7 @@ import io.github.igornunes.yourfinances.domain.entry.deletesWholePurchase
 import io.github.igornunes.yourfinances.domain.entry.edited
 import io.github.igornunes.yourfinances.domain.entry.isQuickEditable
 import io.github.igornunes.yourfinances.domain.entry.newEntry
+import io.github.igornunes.yourfinances.domain.model.Category
 import io.github.igornunes.yourfinances.domain.model.CreditCard
 import io.github.igornunes.yourfinances.domain.model.Entry
 import io.github.igornunes.yourfinances.domain.model.EntryType
@@ -45,12 +47,18 @@ data class EntryFormUiState(
     val cardId: Long? = null,
     val pockets: List<SavingsPocket> = emptyList(),
     val pocketId: Long? = null,
+    val categories: List<Category> = emptyList(),
+    val categoryId: Long? = null,
     val status: FormStatus = FormStatus(),
 ) {
     val amountCents: Long get() = centsFromAmountDigits(amountDigits)
     val card: CreditCard? get() = cards.find { it.id == cardId }
     val showsPayment: Boolean get() = canEditValues && type.canUseCard && cards.isNotEmpty()
     val showsPocket: Boolean get() = canEditValues && type.movesSavings && pockets.isNotEmpty()
+
+    /** Categories of the selected type's kind. */
+    val typeCategories: List<Category> get() = categories.filter { it.kind == type.categoryKind }
+    val showsCategory: Boolean get() = canEditValues && typeCategories.isNotEmpty()
 
     /** Due date of the invoice the entry goes into, when paid with a card. */
     val cardDueDate: LocalDate? get() = card?.paymentDateFor(occurredOn)
@@ -59,8 +67,7 @@ data class EntryFormUiState(
     private val cardPending: Boolean get() = cardId != null && card == null
     val canSave: Boolean get() = !isBusy && amountCents > 0 && !cardPending
 
-    /** Recurrences do not hold a card yet, so applying a card occurrence to the next ones is not offered. */
-    val canApplyToUpcoming: Boolean get() = isRecurring && cardId == null
+    val canApplyToUpcoming: Boolean get() = isRecurring
 }
 
 /** Creates a new entry when [entryId] is null, otherwise edits that entry. */
@@ -72,6 +79,7 @@ class EntryFormViewModel(
     cards: CreditCardRepository,
     private val clock: Clock,
     savings: SavingsRepository,
+    categories: CategoryRepository,
 ) : ViewModel() {
     private var original: Entry? = null
 
@@ -92,6 +100,13 @@ class EntryFormViewModel(
                 _state.update { state -> state.copy(pockets = list, pocketId = state.pocketId.takeIf { id -> list.any { it.id == id } }) }
             }
         }
+        viewModelScope.launch {
+            categories.observeAll().collect { list ->
+                _state.update { state ->
+                    state.copy(categories = list, categoryId = state.categoryId.takeIf { id -> list.any { it.id == id } })
+                }
+            }
+        }
         if (entryId != null) {
             load(updateStatus, read = { entries.getById(entryId) }) { entry ->
                 original = entry
@@ -106,6 +121,7 @@ class EntryFormViewModel(
                         deletesWholePurchase = entry.deletesWholePurchase,
                         cardId = entry.creditCardId,
                         pocketId = entry.savingsPocketId,
+                        categoryId = entry.categoryId,
                     )
                 }
             }
@@ -119,8 +135,11 @@ class EntryFormViewModel(
             type = type,
             cardId = it.cardId.takeIf { type.canUseCard },
             pocketId = it.pocketId.takeIf { type.movesSavings },
+            categoryId = it.categoryId.takeIf { _ -> type.categoryKind == it.type.categoryKind },
         )
     }
+
+    fun onCategoryChange(categoryId: Long?) = _state.update { it.copy(categoryId = categoryId) }
 
     fun onCardChange(cardId: Long?) = _state.update { it.copy(cardId = cardId) }
 
@@ -139,12 +158,17 @@ class EntryFormViewModel(
         persist(updateStatus) {
             if (existing == null) {
                 entries.add(
-                    newEntry(current.type, current.amountCents, current.description, current.occurredOn, current.card, current.pocketId),
+                    newEntry(
+                        current.type, current.amountCents, current.description, current.occurredOn, current.card,
+                        current.pocketId, current.categoryId,
+                    ),
                 )
                 return@persist
             }
             val edited = existing.edited(
-                current.type, current.amountCents, current.description, current.occurredOn, current.card, current.pocketId,
+                current.type, current.amountCents, current.description, current.occurredOn, current.card,
+                savingsPocketId = current.pocketId,
+                categoryId = current.categoryId,
             )
             if (current.canApplyToUpcoming && current.applyToUpcoming) {
                 recurrences.applyToUpcoming(edited, predictionWindow(LocalDate.now(clock)))
