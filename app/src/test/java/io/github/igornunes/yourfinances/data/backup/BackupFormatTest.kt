@@ -66,7 +66,7 @@ class BackupFormatTest {
     fun `the format is plain and stable`() {
         val json = json()
         listOf(
-            "\"format\":3",
+            "\"format\":4",
             "\"exportedOn\":\"2026-10-28\"",
             "\"occurredOn\":\"2026-03-05\"",
             "\"amountCents\":4590",
@@ -81,7 +81,7 @@ class BackupFormatTest {
 
     @Test
     fun `newer formats are refused`() {
-        assertThrows<BackupInvalidException> { decode(json().replace("\"format\":3", "\"format\":4")) }
+        assertThrows<BackupInvalidException> { decode(json().replace("\"format\":4", "\"format\":5")) }
     }
 
     @Test
@@ -99,11 +99,23 @@ class BackupFormatTest {
     }
 
     @Test
+    fun `references to cards and categories missing from the file are refused`() {
+        assertThrows<BackupInvalidException> { decode(json(tables.copy(creditCards = emptyList()))) }
+        assertThrows<BackupInvalidException> { decode(json(tables.copy(categories = emptyList()))) }
+    }
+
+    @Test
+    fun `import keys survive the round trip`() {
+        val imported = tables.copy(entries = tables.entries.map { it.copy(importKey = "id:F${it.id}") })
+        assertEquals(imported, decode(json(imported)))
+    }
+
+    @Test
     fun `malformed content is refused`() {
         assertThrows<BackupInvalidException> { decode("not json") }
         assertThrows<BackupInvalidException> { decode(json().replace("2026-03-05", "2026-13-05")) }
         assertThrows<BackupInvalidException> { decode(json().replace("\"FLEXIBLE_EXPENSE\"", "\"GIFT\"")) }
-        assertThrows<BackupInvalidException> { decode(json().replace("{\"format\":3,", "{\"format\":3,\"extra\":true,")) }
+        assertThrows<BackupInvalidException> { decode(json().replace("{\"format\":4,", "{\"format\":4,\"extra\":true,")) }
     }
 
     @Test
@@ -123,7 +135,7 @@ class BackupFormatTest {
 
     @Test
     fun `version 2 categories, typed by entry type, read as their kind`() {
-        val v2 = json().replace("\"format\":3", "\"format\":2")
+        val v2 = json().replace("\"format\":4", "\"format\":2")
             .replace("\"type\":\"EXPENSE\",\"monthlyLimitCents\":50000", "\"type\":\"FLEXIBLE_EXPENSE\"")
         assertEquals(CategoryKind.EXPENSE, decode(v2).categories.single().kind)
         assertThrows<BackupInvalidException> { decode(json().replace("\"type\":\"EXPENSE\"", "\"type\":\"GIFT\"")) }

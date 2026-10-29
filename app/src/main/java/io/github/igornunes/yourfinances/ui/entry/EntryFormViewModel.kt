@@ -103,7 +103,11 @@ class EntryFormViewModel(
         viewModelScope.launch {
             categories.observeAll().collect { list ->
                 _state.update { state ->
-                    state.copy(categories = list, categoryId = state.categoryId.takeIf { id -> list.any { it.id == id } })
+                    // A category deleted meanwhile, or of the other kind, cannot be saved into.
+                    state.copy(
+                        categories = list,
+                        categoryId = state.categoryId.takeIf { id -> list.any { it.id == id && it.kind == state.type.categoryKind } },
+                    )
                 }
             }
         }

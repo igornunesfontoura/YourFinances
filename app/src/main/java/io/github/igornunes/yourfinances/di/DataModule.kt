@@ -9,12 +9,14 @@ import io.github.igornunes.yourfinances.data.files.Documents
 import io.github.igornunes.yourfinances.data.repository.CategoryRepository
 import io.github.igornunes.yourfinances.data.repository.CreditCardRepository
 import io.github.igornunes.yourfinances.data.repository.EntryRepository
+import io.github.igornunes.yourfinances.data.repository.ImportRepository
 import io.github.igornunes.yourfinances.data.repository.InstallmentRepository
 import io.github.igornunes.yourfinances.data.repository.InvestmentGoalRepository
 import io.github.igornunes.yourfinances.data.repository.RecurrenceRepository
 import io.github.igornunes.yourfinances.data.repository.RoomCategoryRepository
 import io.github.igornunes.yourfinances.data.repository.RoomCreditCardRepository
 import io.github.igornunes.yourfinances.data.repository.RoomEntryRepository
+import io.github.igornunes.yourfinances.data.repository.RoomImportRepository
 import io.github.igornunes.yourfinances.data.repository.RoomInstallmentRepository
 import io.github.igornunes.yourfinances.data.repository.RoomInvestmentGoalRepository
 import io.github.igornunes.yourfinances.data.repository.RoomRecurrenceRepository
@@ -52,5 +54,6 @@ val dataModule = module {
     single<CategoryRepository> { RoomCategoryRepository(get()) }
     single<CreditCardRepository> { RoomCreditCardRepository(get()) }
     single<SavingsRepository> { RoomSavingsRepository(get()) }
+    single<ImportRepository> { RoomImportRepository(get()) }
     single<InvestmentGoalRepository> { RoomInvestmentGoalRepository(get<AppDatabase>().investmentGoalDao()) }
 }

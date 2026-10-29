@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import io.github.igornunes.yourfinances.data.repository.RoomCreditCardRepository
 import org.junit.Assert.assertTrue
 import io.github.igornunes.yourfinances.data.db.entity.toEntity
 import io.github.igornunes.yourfinances.domain.model.CreditCard
@@ -169,5 +170,37 @@ class RecurrenceRepositoryTest {
         val predicted = all()
         assertEquals(setOf(cardId), predicted.map { it.creditCardId }.toSet())
         assertTrue(predicted.all { it.paidOn.dayOfMonth == 5 && it.paidOn.isAfter(it.occurredOn) })
+    }
+
+    /** Card entries are paid months later, so these tests look at the window by accrual date. */
+    private suspend fun byAccrual(): List<Entry> =
+        (3..5).flatMap { entries.observeMonth(YearMonth.of(2026, it), DateBasis.ACCRUAL).first() }
+
+    @Test
+    fun movingARecurrenceOffAndOntoACardRebuildsItsPredictions() = runTest {
+        val cardId = database.creditCardDao().insert(CreditCard(name = "Nubank", closingDay = 25, dueDay = 5).toEntity())
+        val id = recurrences.add(streaming.copy(creditCardId = cardId), window)
+        recurrences.update(streaming.copy(id = id), window)
+        assertTrue(byAccrual().all { it.creditCardId == null && it.paidOn == it.occurredOn })
+
+        recurrences.update(streaming.copy(id = id, creditCardId = cardId), window)
+        val onCard = byAccrual()
+        assertEquals(3, onCard.size)
+        assertTrue(onCard.all { it.creditCardId == cardId && it.paidOn.dayOfMonth == 5 })
+    }
+
+    @Test
+    fun cardDaysChangeKeepsOnePredictionPerSlot() = runTest {
+        val cards = RoomCreditCardRepository(database)
+        val card = CreditCard(name = "Nubank", closingDay = 25, dueDay = 5).let { it.copy(id = cards.add(it)) }
+        recurrences.add(streaming.copy(creditCardId = card.id), window)
+        val before = byAccrual()
+
+        cards.update(card.copy(closingDay = 10, dueDay = 20), today)
+        recurrences.predictAll(window)
+
+        val after = byAccrual()
+        assertEquals(before.map { it.scheduledFor }, after.map { it.scheduledFor })
+        assertTrue(after.zip(before).all { (moved, old) -> !moved.paidOn.isBefore(old.occurredOn) })
     }
 }

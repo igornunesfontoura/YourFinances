@@ -49,12 +49,16 @@ class SubscriptionsTest {
     }
 
     @Test
-    fun `charges today count, and one ending before its next charge has none left`() {
-        val endingSoon = recurrence(1, 1000, 25, endsOn = LocalDate.of(2026, 3, 20))
+    fun `charges today count, ended or ending recurrences cost only what is left`() {
+        val endingSoon = recurrence(1, 1000, 10, endsOn = LocalDate.of(2026, 5, 20))
         val today15 = recurrence(2, 1000, 15)
-        val summary = subscriptionsSummary(listOf(endingSoon, today15), today)
+        val ended = recurrence(3, 1000, 25, endsOn = LocalDate.of(2026, 3, 20))
+        val summary = subscriptionsSummary(listOf(endingSoon, today15, ended), today)
         assertEquals(listOf(today15, endingSoon), summary.subscriptions.map { it.recurrence })
-        assertEquals(listOf(today, null), summary.subscriptions.map { it.nextChargeOn })
+        assertEquals(listOf(today, LocalDate.of(2026, 4, 10)), summary.subscriptions.map { it.nextChargeOn })
+        // April and May for the one ending in May; twelve charges for the other.
+        assertEquals(listOf(12000L, 2000L), summary.subscriptions.map { it.yearlyCents })
+        assertEquals(14000L, summary.yearlyCents)
     }
 
     @Test

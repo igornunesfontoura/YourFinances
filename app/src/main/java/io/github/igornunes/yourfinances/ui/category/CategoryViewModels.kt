@@ -72,7 +72,8 @@ class CategoryFormViewModel(categoryId: Long?, private val categories: CategoryR
 
     fun onNameChange(name: String) = _state.update { it.copy(name = name) }
 
-    fun onKindChange(kind: CategoryKind) = _state.update { it.copy(kind = kind) }
+    /** Only for new categories: an existing one keeps its kind. */
+    fun onKindChange(kind: CategoryKind) = _state.update { if (it.isEditing) it else it.copy(kind = kind) }
 
     fun onLimitChange(input: String) = _state.update { it.copy(limitDigits = normalizeAmountDigits(input)) }
 

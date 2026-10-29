@@ -8,6 +8,7 @@ import io.github.igornunes.yourfinances.data.files.Documents
 import io.github.igornunes.yourfinances.data.security.DatabaseRecovery
 import io.github.igornunes.yourfinances.data.security.KeyStatus
 import io.github.igornunes.yourfinances.data.settings.Settings
+import io.github.igornunes.yourfinances.domain.importing.CsvMapping
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.io.IOException
@@ -56,9 +57,16 @@ class FakeDocuments : Documents {
 
 class FakeSettings(lockEnabled: Boolean = true) : Settings {
     override val lockEnabled = MutableStateFlow(lockEnabled)
+    private val csvMappings = mutableMapOf<List<String>, CsvMapping>()
 
     override fun setLockEnabled(enabled: Boolean) {
         lockEnabled.value = enabled
+    }
+
+    override fun csvMapping(header: List<String>) = csvMappings[header]
+
+    override fun saveCsvMapping(header: List<String>, mapping: CsvMapping) {
+        csvMappings[header] = mapping
     }
 }
 

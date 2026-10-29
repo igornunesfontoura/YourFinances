@@ -17,6 +17,7 @@ import io.github.igornunes.yourfinances.ui.category.CategoryListRoute
 import io.github.igornunes.yourfinances.ui.entry.EntryFormRoute
 import io.github.igornunes.yourfinances.ui.goal.InvestmentGoalFormRoute
 import io.github.igornunes.yourfinances.ui.home.HomeRoute
+import io.github.igornunes.yourfinances.ui.importing.ImportRoute
 import io.github.igornunes.yourfinances.ui.installment.InstallmentFormRoute
 import io.github.igornunes.yourfinances.ui.installment.InstallmentListRoute
 import io.github.igornunes.yourfinances.ui.month.MonthRoute
@@ -42,6 +43,7 @@ private const val ENTRY = "entry?$ID={$ID}"
 private const val RECURRENCE = "recurrence?$ID={$ID}"
 private const val CARDS = "cards"
 private const val SETTINGS = "settings"
+private const val IMPORT = "import"
 private const val SAVINGS = "savings"
 private const val REPORTS = "reports"
 private const val SUBSCRIPTIONS = "subscriptions"
@@ -138,7 +140,14 @@ fun AppNavHost(onDisableLock: () -> Unit) {
             PocketFormRoute(pocketId = entry.optionalId(), onDone = { navController.closeFrom(entry) })
         }
         composable(SETTINGS) { entry ->
-            SettingsRoute(onBack = { navController.closeFrom(entry) }, onDisableLock = onDisableLock)
+            SettingsRoute(
+                onBack = { navController.closeFrom(entry) },
+                onDisableLock = onDisableLock,
+                onOpenImport = { navController.navigateFrom(entry, IMPORT) },
+            )
+        }
+        composable(IMPORT) { entry ->
+            ImportRoute(onDone = { navController.closeFrom(entry) })
         }
         composable(MONTH, arguments = monthArgument) { entry ->
             MonthRoute(

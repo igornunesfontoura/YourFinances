@@ -34,7 +34,7 @@ fun categorySpending(
     val listed = expenseCategories
         .map { CategorySpending(it, byCategory[it.id].orEmpty().sumOf { entry -> entry.amountCents }) }
         .filter { it.spentCents > 0 || it.limitCents != null }
-        .sortedWith(compareByDescending<CategorySpending> { it.spentCents }.thenBy { it.category?.name })
+        .sortedWith(compareByDescending<CategorySpending> { it.spentCents }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.category?.name.orEmpty() })
     val uncategorized = byCategory[null].orEmpty().sumOf { it.amountCents }
     return listed + listOfNotNull(CategorySpending(null, uncategorized).takeIf { uncategorized > 0 })
 }

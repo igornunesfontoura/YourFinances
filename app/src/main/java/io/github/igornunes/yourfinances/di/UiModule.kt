@@ -9,6 +9,7 @@ import io.github.igornunes.yourfinances.ui.category.CategoryListViewModel
 import io.github.igornunes.yourfinances.ui.entry.EntryFormViewModel
 import io.github.igornunes.yourfinances.ui.goal.InvestmentGoalFormViewModel
 import io.github.igornunes.yourfinances.ui.home.HomeViewModel
+import io.github.igornunes.yourfinances.ui.importing.ImportViewModel
 import io.github.igornunes.yourfinances.ui.installment.InstallmentFormViewModel
 import io.github.igornunes.yourfinances.ui.installment.InstallmentListViewModel
 import io.github.igornunes.yourfinances.ui.lock.AppLock
@@ -36,6 +37,7 @@ val uiModule = module {
     viewModel { ReportsViewModel(get(), get(), get()) }
     viewModel { SubscriptionsViewModel(get(), get(), get()) }
     viewModel { CategoryListViewModel(get()) }
+    viewModel { ImportViewModel(get(), get(), get(), get(), get()) }
     viewModel { params -> CategoryFormViewModel(params.getOrNull(), get()) }
     viewModel { params -> PocketFormViewModel(params.getOrNull(), get()) }
     viewModel { HomeViewModel(get(), get(), get()) }

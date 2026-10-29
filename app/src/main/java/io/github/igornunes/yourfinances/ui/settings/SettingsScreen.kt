@@ -44,7 +44,12 @@ import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsRoute(onBack: () -> Unit, onDisableLock: () -> Unit, viewModel: SettingsViewModel = koinViewModel()) {
+fun SettingsRoute(
+    onBack: () -> Unit,
+    onDisableLock: () -> Unit,
+    onOpenImport: () -> Unit,
+    viewModel: SettingsViewModel = koinViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -103,6 +108,7 @@ fun SettingsRoute(onBack: () -> Unit, onDisableLock: () -> Unit, viewModel: Sett
             SectionTitle(R.string.settings_data)
             ActionItem(R.string.settings_backup, R.string.settings_backup_hint, enabled) { askBackupPassword = true }
             ActionItem(R.string.settings_restore, R.string.settings_restore_hint, enabled) { pickBackup.launch(arrayOf("*/*")) }
+            ActionItem(R.string.settings_import, R.string.settings_import_hint, enabled, onClick = onOpenImport)
             ActionItem(R.string.settings_export_csv, R.string.settings_export_csv_hint, enabled) {
                 exportCsv.launch(viewModel.csvFileName())
             }

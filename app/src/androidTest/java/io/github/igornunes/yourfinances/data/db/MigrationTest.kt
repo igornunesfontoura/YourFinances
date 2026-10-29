@@ -135,4 +135,26 @@ class MigrationTest {
             database.close()
         }
     }
+
+    @Test
+    fun migrate5To6AddsImportKeys() = runTest {
+        helper.createDatabase(name, 5).apply {
+            execSQL(
+                "INSERT INTO entries (id, type, amount_cents, description, occurred_on, paid_on, status) " +
+                    "VALUES (1, 'FLEXIBLE_EXPENSE', 4590, 'Jantar', 20500, 20500, 'CONFIRMED')",
+            )
+            close()
+        }
+        helper.runMigrationsAndValidate(name, 6, true, MIGRATION_5_6).close()
+
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val database = Room.databaseBuilder(context, AppDatabase::class.java, name)
+            .addMigrations(*ALL_MIGRATIONS)
+            .build()
+        try {
+            assertEquals(null, database.entryDao().getById(1)!!.importKey)
+        } finally {
+            database.close()
+        }
+    }
 }

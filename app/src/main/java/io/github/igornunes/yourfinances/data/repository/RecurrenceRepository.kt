@@ -103,7 +103,8 @@ class RoomRecurrenceRepository(private val database: AppDatabase) : RecurrenceRe
     private suspend fun predict(recurrence: Recurrence, from: LocalDate, to: LocalDate): Int {
         if (from.isAfter(to)) return 0
         val usedSlots = entryDao.scheduledDates(recurrence.id) + recurrenceDao.skippedSlots(recurrence.id)
-        val card = recurrence.creditCardId?.let { requireNotNull(cardDao.getById(it)).toDomain() }
+        // Cannot be missing: a card used by a recurrence is never deleted (RESTRICT and the delete check).
+        val card = recurrence.creditCardId?.let { requireNotNull(cardDao.getById(it)) { "recurrence card missing" }.toDomain() }
         val entries = recurrence.predictedEntriesBetween(from, to, usedSlots.toSet(), card)
         entryDao.insertAll(entries.map { it.toEntity() })
         return entries.size

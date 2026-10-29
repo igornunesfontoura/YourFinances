@@ -10,6 +10,8 @@ import io.github.igornunes.yourfinances.domain.model.DateBasis
 import io.github.igornunes.yourfinances.domain.report.MonthEvolution
 import io.github.igornunes.yourfinances.domain.report.monthlyEvolution
 import io.github.igornunes.yourfinances.domain.report.monthsEndingAt
+import io.github.igornunes.yourfinances.domain.recurrence.isBeyondPredictions
+import io.github.igornunes.yourfinances.ui.components.todayFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,19 +33,22 @@ data class ReportsUiState(
     val spending: List<CategorySpending> = emptyList(),
     /** The [EVOLUTION_MONTHS] months ending at [month], oldest first. */
     val evolution: List<MonthEvolution> = emptyList(),
+    /** Recurring expenses are not generated for this month yet. */
+    val beyondPredictions: Boolean = false,
     val loading: Boolean = true,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ReportsViewModel(entries: EntryRepository, categories: CategoryRepository, clock: Clock) : ViewModel() {
+class ReportsViewModel(entries: EntryRepository, categories: CategoryRepository, private val clock: Clock) : ViewModel() {
     private val month = MutableStateFlow(YearMonth.now(clock))
 
     val state: StateFlow<ReportsUiState> = month
         .flatMapLatest { month ->
             val months = monthsEndingAt(month, EVOLUTION_MONTHS)
-            combine(entries.observeMonths(months.first(), month, REPORTS_BASIS), categories.observeAll()) { list, categoryList ->
+            combine(entries.observeMonths(months.first(), month, REPORTS_BASIS), categories.observeAll(), clock.todayFlow()) { list, categoryList, today ->
                 ReportsUiState(
                     month = month,
+                    beyondPredictions = isBeyondPredictions(month, today),
                     spending = categorySpending(list, categoryList, month, REPORTS_BASIS),
                     evolution = monthlyEvolution(list, months, REPORTS_BASIS),
                     loading = false,

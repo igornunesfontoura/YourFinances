@@ -55,6 +55,7 @@ import java.time.LocalDate
         Index("installment_purchase_id"),
         Index(value = ["recurrence_id", "scheduled_for"], unique = true),
         Index("savings_pocket_id"),
+        Index("import_key"),
     ],
 )
 data class EntryEntity(
@@ -73,6 +74,7 @@ data class EntryEntity(
     @ColumnInfo(name = "installment_number") val installmentNumber: Int?,
     @ColumnInfo(name = "installment_count") val installmentCount: Int?,
     @ColumnInfo(name = "savings_pocket_id") val savingsPocketId: Long? = null,
+    @ColumnInfo(name = "import_key") val importKey: String? = null,
 )
 
 fun EntryEntity.toDomain() = Entry(
@@ -92,6 +94,7 @@ fun EntryEntity.toDomain() = Entry(
     installmentNumber = installmentNumber,
     installmentCount = installmentCount,
     savingsPocketId = savingsPocketId,
+    importKey = importKey,
 )
 
 fun Entry.toEntity() = EntryEntity(
@@ -110,4 +113,5 @@ fun Entry.toEntity() = EntryEntity(
     installmentNumber = installmentNumber,
     installmentCount = installmentCount,
     savingsPocketId = savingsPocketId,
+    importKey = importKey,
 )

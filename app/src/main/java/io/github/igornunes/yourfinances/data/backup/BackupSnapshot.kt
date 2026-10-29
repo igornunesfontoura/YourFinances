@@ -48,10 +48,10 @@ data class BackupTables(
  *
  * Versions: 1 had an (always empty) `investments` list; 2 drops it and adds savings pockets; 3
  * adds category limits and cards on recurrences, and categories are `INCOME` or `EXPENSE` (older
- * files hold an entry type there, read as its kind).
+ * files hold an entry type there, read as its kind); 4 adds the import key of imported entries.
  */
 object BackupFormat {
-    const val VERSION = 3
+    const val VERSION = 4
 
     private val json = Json { encodeDefaults = true }
 
@@ -73,7 +73,7 @@ object BackupFormat {
             val text = bytes.toString(Charsets.UTF_8)
             val format = json.parseToJsonElement(text).jsonObject["format"]?.jsonPrimitive?.int
             val parser = when (format) {
-                VERSION, 2 -> json
+                VERSION, 2, 3 -> json
                 1 -> jsonV1
                 else -> throw BackupInvalidException()
             }
@@ -95,11 +95,19 @@ object BackupFormat {
 
     private fun BackupTables.validate() {
         categories.forEach { it.toDomain() }
-        // Pocket references are checked here so a bad file reads as invalid, not as a failed restore.
+        // References are checked here so a bad file reads as invalid, not as a failed restore.
         val pocketIds = savingsPockets.map { it.id }.toSet()
         require((entries.mapNotNull { it.savingsPocketId } + recurrences.mapNotNull { it.savingsPocketId }).all { it in pocketIds }) {
             "unknown savings pocket"
         }
+        val cardIds = creditCards.map { it.id }.toSet()
+        val cardRefs = entries.mapNotNull { it.creditCardId } + recurrences.mapNotNull { it.creditCardId } +
+            installmentPurchases.mapNotNull { it.creditCardId } + invoicePayments.map { it.cardId }
+        require(cardRefs.all { it in cardIds }) { "unknown credit card" }
+        val categoryIds = categories.map { it.id }.toSet()
+        val categoryRefs = entries.mapNotNull { it.categoryId } + recurrences.mapNotNull { it.categoryId } +
+            installmentPurchases.mapNotNull { it.categoryId }
+        require(categoryRefs.all { it in categoryIds }) { "unknown category" }
         installmentPurchases.forEach { it.toDomain() }
         recurrences.forEach { it.toDomain() }
         creditCards.forEach { it.toDomain() }
@@ -132,7 +140,8 @@ private data class CategoryRow(val id: Long, val name: String, val type: String,
     val kind: CategoryKind
         get() = when (type) {
             "INCOME" -> CategoryKind.INCOME
-            "EXPENSE", "FIXED_EXPENSE", "FLEXIBLE_EXPENSE" -> CategoryKind.EXPENSE
+            // Formats before 3 stored any entry type here; the v5 migration reads them the same way.
+            "EXPENSE", "FIXED_EXPENSE", "FLEXIBLE_EXPENSE", "INVESTMENT", "WITHDRAWAL" -> CategoryKind.EXPENSE
             else -> throw IllegalArgumentException("unknown category kind")
         }
 }
@@ -187,6 +196,7 @@ private data class EntryRow(
     val installmentNumber: Int?,
     val installmentCount: Int?,
     val savingsPocketId: Long? = null,
+    val importKey: String? = null,
 )
 
 @Serializable
@@ -226,7 +236,7 @@ private fun BackupTables.toSnapshot(exportedOn: LocalDate) = BackupSnapshot(
         EntryRow(
             it.id, it.type, it.amountCents, it.description, it.occurredOn, it.paidOn, it.status, it.categoryId,
             it.creditCardId, it.recurrenceId, it.scheduledFor, it.installmentPurchaseId, it.installmentNumber,
-            it.installmentCount, it.savingsPocketId,
+            it.installmentCount, it.savingsPocketId, it.importKey,
         )
     },
     invoicePayments = invoicePayments.map { InvoicePaymentRow(it.cardId, it.dueDate, it.paidOn) },
@@ -253,7 +263,7 @@ private fun BackupSnapshot.toTables() = BackupTables(
         EntryEntity(
             it.id, it.type, it.amountCents, it.description, it.occurredOn, it.paidOn, it.status, it.categoryId,
             it.creditCardId, it.recurrenceId, it.scheduledFor, it.installmentPurchaseId, it.installmentNumber,
-            it.installmentCount, it.savingsPocketId,
+            it.installmentCount, it.savingsPocketId, it.importKey,
         )
     },
     invoicePayments = invoicePayments.map { InvoicePaymentEntity(it.cardId, it.dueDate, it.paidOn) },

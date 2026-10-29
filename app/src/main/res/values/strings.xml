@@ -135,9 +135,9 @@
     <string name="card_current_invoice">Fatura atual: %1$s, vence em %2$s</string>
     <string name="card_closed_invoice">A pagar: %1$s até %2$s</string>
     <string name="card_overdue_invoice">Vencida: %1$s em %2$s</string>
-    <string name="card_delete_blocked">Este cartão tem lançamentos e não pode ser excluído.</string>
+    <string name="card_delete_blocked">Este cartão tem lançamentos ou recorrências e não pode ser excluído.</string>
     <string name="card_delete_confirm_title">Excluir cartão?</string>
-    <string name="card_delete_confirm_message">Só é possível excluir cartões sem lançamentos.</string>
+    <string name="card_delete_confirm_message">Só é possível excluir cartões sem lançamentos nem recorrências.</string>
     <string name="invoice_open">Aberta</string>
     <string name="invoice_closed">Fechada</string>
     <string name="invoice_overdue">Vencida</string>
@@ -179,6 +179,7 @@
     <string name="category_kind_income">Entradas</string>
     <string name="category_limit">Limite por mês (opcional)</string>
     <string name="category_limit_hint">Serve de referência nos relatórios; não muda o quanto ainda pode gastar.</string>
+    <string name="category_kind_locked">O tipo não muda depois de criada; crie outra categoria se precisar.</string>
     <string name="category_limit_of">Limite de %1$s por mês</string>
     <string name="category_delete_confirm_title">Excluir categoria?</string>
     <string name="category_delete_confirm_message">Os lançamentos desta categoria continuam no histórico, sem categoria.</string>
@@ -187,10 +188,11 @@
     <string name="reports_title">Relatórios</string>
     <string name="reports_by_category">Saídas por categoria</string>
     <string name="reports_basis_hint">Por competência, com as saídas previstas do mês.</string>
+    <string name="reports_beyond_predictions">As recorrências ainda não foram previstas para este mês: as saídas fixas podem estar incompletas.</string>
     <string name="reports_no_expenses">Nenhuma saída neste mês.</string>
     <string name="reports_of_limit">de %1$s</string>
     <string name="reports_over_limit">Acima do limite de %1$s</string>
-    <string name="reports_evolution">Últimos 12 meses</string>
+    <string name="reports_evolution">12 meses até este</string>
     <string name="reports_month_line">Entradas %1$s · saídas %2$s</string>
     <string name="reports_chart_description">Gráfico de entradas e saídas dos últimos 12 meses. Os valores estão na lista abaixo.</string>
 
@@ -198,14 +200,42 @@
     <string name="subscriptions_title">Assinaturas e contas</string>
     <string name="subscriptions_per_month">Por mês, em média</string>
     <string name="subscriptions_per_year">%1$s por ano</string>
-    <string name="subscriptions_hint">Recorrências de saídas fixas ativas. As anuais entram divididas por 12.</string>
+    <string name="subscriptions_hint">Saídas fixas recorrentes cobradas nos próximos 12 meses. As anuais entram divididas por 12.</string>
     <string name="subscriptions_empty">Nenhuma saída fixa recorrente. Cadastre em Recorrências.</string>
     <string name="subscription_monthly">Mensal</string>
     <string name="subscription_yearly">Anual</string>
     <string name="subscription_next">Próxima em %1$s</string>
-    <string name="subscription_no_next">Sem próximas cobranças</string>
     <string name="subscription_untitled">Saída fixa</string>
     <string name="recurrence_card_hint">Cada ocorrência entra na fatura em que cair, como uma compra no cartão.</string>
+
+    <!-- Import -->
+    <string name="import_title">Importar extrato</string>
+    <string name="import_intro">Escolha um extrato exportado pelo app ou site do seu banco, em OFX ou CSV. Você revisa tudo antes de salvar.</string>
+    <string name="import_privacy">O arquivo é lido só neste aparelho; nada é enviado para lugar nenhum.</string>
+    <string name="import_pick">Escolher arquivo</string>
+    <string name="import_mapping_intro">Indique as colunas deste arquivo. A escolha fica guardada para os próximos arquivos com as mesmas colunas.</string>
+    <string name="import_column_date">Data</string>
+    <string name="import_column_description">Descrição</string>
+    <string name="import_column_amount">Valor</string>
+    <string name="import_column_choice">%1$s: %2$s</string>
+    <string name="import_positive_is_expense">Valores positivos são saídas</string>
+    <string name="import_positive_is_expense_hint">Comum em faturas de cartão, que listam as compras sem sinal.</string>
+    <string name="import_preview">Primeiras linhas</string>
+    <string name="import_destination">De onde é este extrato?</string>
+    <string name="import_destination_account">Conta</string>
+    <string name="import_card_hint">As compras entram nas faturas do cartão. Pagamentos e estornos começam desmarcados.</string>
+    <string name="import_review_hint">%1$d lançamentos no arquivo. Toque em um para mudar o tipo ou a categoria.</string>
+    <string name="import_skipped_rows">%1$d linhas sem data ou valor válidos foram ignoradas.</string>
+    <string name="import_already_imported">Já importado</string>
+    <string name="import_possible_duplicate">Talvez já registrado</string>
+    <string name="import_untitled">Sem descrição</string>
+    <string name="import_confirm">Importar %1$d</string>
+    <string name="import_done">%1$d lançamentos importados</string>
+    <string name="import_done_hint">Eles aparecem nos meses em que aconteceram. Importar o mesmo arquivo de novo não os duplica.</string>
+    <string name="import_unreadable">Não foi possível ler o arquivo.</string>
+    <string name="import_no_transactions">Nenhum lançamento encontrado. Confira se o arquivo é um extrato OFX ou CSV.</string>
+    <string name="import_unmapped">Não reconhecemos as colunas. Escolha qual é a data, a descrição e o valor.</string>
+    <string name="import_failed">Não foi possível importar. Nenhum lançamento foi salvo.</string>
 
     <!-- Lock -->
     <string name="lock_title">Your Finances está bloqueado</string>
@@ -224,6 +254,8 @@
     <string name="settings_backup_hint">Salva todos os dados num arquivo protegido por uma senha sua.</string>
     <string name="settings_restore">Restaurar backup</string>
     <string name="settings_restore_hint">Substitui todos os dados pelos de um backup.</string>
+    <string name="settings_import">Importar extrato (OFX ou CSV)</string>
+    <string name="settings_import_hint">Traz os lançamentos de um arquivo exportado pelo seu banco.</string>
     <string name="settings_export_csv">Exportar lançamentos (CSV)</string>
     <string name="settings_export_csv_hint">Planilha aberta com todos os lançamentos, sem criptografia.</string>
 

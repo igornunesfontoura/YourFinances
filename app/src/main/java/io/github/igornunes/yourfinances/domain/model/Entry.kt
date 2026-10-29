@@ -42,6 +42,7 @@ enum class EntryStatus { PREDICTED, CONFIRMED }
  * (when money left or arrived; for credit cards, the invoice due date).
  * [savingsPocketId] is the pocket an [EntryType.INVESTMENT] or [EntryType.WITHDRAWAL] moves money
  * in or out of; null means "sem caixinha".
+ * [importKey] identifies the bank statement line an imported entry came from.
  * [scheduledFor] is the slot a [Recurrence] generated this entry for, kept even if the user moves
  * the entry to another date, so the same slot is never generated twice.
  */
@@ -61,6 +62,7 @@ data class Entry(
     val installmentNumber: Int? = null,
     val installmentCount: Int? = null,
     val savingsPocketId: Long? = null,
+    val importKey: String? = null,
 ) {
     init {
         require(amountCents >= 0) { "amountCents must not be negative" }

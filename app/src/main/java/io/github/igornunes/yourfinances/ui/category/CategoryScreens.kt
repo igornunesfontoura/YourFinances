@@ -132,7 +132,9 @@ fun CategoryFormRoute(
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             modifier = Modifier.fillMaxWidth(),
         )
-        SegmentedSelector(CategoryKind.entries, state.kind, { it.label }, viewModel::onKindChange, enabled)
+        // Changing the kind would leave its entries pointing at a category of the other kind.
+        SegmentedSelector(CategoryKind.entries, state.kind, { it.label }, viewModel::onKindChange, enabled && !state.isEditing)
+        if (state.isEditing) HintText(R.string.category_kind_locked)
         if (state.kind == CategoryKind.EXPENSE) {
             AmountField(state.limitDigits, viewModel::onLimitChange, R.string.category_limit, enabled, onDone = viewModel::save)
             HintText(R.string.category_limit_hint)

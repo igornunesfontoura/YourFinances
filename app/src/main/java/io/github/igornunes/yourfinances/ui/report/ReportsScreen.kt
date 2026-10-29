@@ -80,6 +80,16 @@ fun ReportsRoute(onBack: () -> Unit, viewModel: ReportsViewModel = koinViewModel
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
+            if (state.beyondPredictions) {
+                item {
+                    Text(
+                        stringResource(R.string.reports_beyond_predictions),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    )
+                }
+            }
             if (!state.loading && state.spending.isEmpty()) {
                 item {
                     Text(

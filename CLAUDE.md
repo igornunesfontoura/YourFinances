@@ -71,6 +71,13 @@ Relatórios precisam deixar claro se usam competência ou caixa.
 - Categorias de saída podem ter limite mensal: é só referência nos relatórios, não altera o "disponível".
 - Relatórios usam competência, como a tela principal, e incluem saídas previstas.
 
+### Importação de extrato
+- OFX (1.x SGML e 2.x XML, de conta e de cartão) e CSV com mapeamento de colunas, que fica lembrado por cabeçalho.
+- Valores e datas são lidos sem ponto flutuante; datas com o dia primeiro (padrão brasileiro) ou ISO.
+- Saída vira flexível, entrada vira entrada; o usuário revisa tipo, categoria e seleção antes de salvar, tudo ou nada.
+- Cada linha importada guarda uma chave (`importKey`): o FITID do banco ou data, valor e descrição numerados. Linha já importada ou igual a um lançamento digitado à mão começa desmarcada.
+- No extrato de cartão, as compras entram nas faturas; entradas (pagamento da fatura, estornos) começam desmarcadas.
+
 ### Cartão de crédito
 - Cada cartão tem dia de fechamento e dia de vencimento.
 - Compra feita após o fechamento cai na fatura do mês seguinte.
@@ -122,7 +129,7 @@ A meta reserva o dinheiro antes mesmo do aporte; aportar além dela reserva mais
 
 ## Testes
 
-- Toda regra do `domain` precisa de teste unitário, especialmente: divisão de parcelas, ciclo de fatura (compra antes/depois do fechamento, virada de mês e de ano), geração de recorrências (dia 31 em meses curtos, fevereiro), cálculo do "disponível" e do guardado por caixinha.
+- Toda regra do `domain` precisa de teste unitário, especialmente: leitura de OFX/CSV e de valores, divisão de parcelas, ciclo de fatura (compra antes/depois do fechamento, virada de mês e de ano), geração de recorrências (dia 31 em meses curtos, fevereiro), cálculo do "disponível" e do guardado por caixinha.
 - Testes de DAO com Room em memória.
 - Ao corrigir bug financeiro, primeiro escreva um teste que reproduz o erro.
 
@@ -136,7 +143,7 @@ A meta reserva o dinheiro antes mesmo do aporte; aportar além dela reserva mais
 6. [x] SQLCipher, bloqueio biométrico, backup criptografado e exportação CSV
 7. [x] Dinheiro guardado: caixinhas, aportes e resgates (sem rendimentos)
 8. [x] Orçamento por categoria, gráficos e painel de assinaturas
-9. [ ] Importação de extrato (OFX/CSV)
+9. [x] Importação de extrato (OFX/CSV)
 
 Atualize os checkboxes conforme as etapas forem concluídas.
 

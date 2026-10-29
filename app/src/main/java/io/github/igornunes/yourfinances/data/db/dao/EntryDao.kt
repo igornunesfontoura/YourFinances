@@ -57,6 +57,13 @@ interface EntryDao {
     @Query("SELECT * FROM entries WHERE credit_card_id = :cardId")
     suspend fun getCardEntries(cardId: Long): List<EntryEntity>
 
+    @Query("SELECT * FROM entries WHERE occurred_on BETWEEN :from AND :to")
+    suspend fun getOccurredBetween(from: LocalDate, to: LocalDate): List<EntryEntity>
+
+    /** Call with at most [MAX_QUERY_KEYS] keys: SQLite limits the number of bound values. */
+    @Query("SELECT import_key FROM entries WHERE import_key IN (:keys)")
+    suspend fun existingImportKeys(keys: List<String>): List<String>
+
     @Query("SELECT * FROM entries WHERE type IN ('INVESTMENT', 'WITHDRAWAL') ORDER BY occurred_on, id")
     fun observeSavingsMovements(): Flow<List<EntryEntity>>
 
@@ -70,3 +77,5 @@ interface EntryDao {
     @Query("SELECT COUNT(*) FROM entries WHERE credit_card_id = :cardId")
     suspend fun countByCard(cardId: Long): Int
 }
+
+const val MAX_QUERY_KEYS = 500
