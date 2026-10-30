@@ -44,6 +44,7 @@ import io.github.igornunesfontoura.yourfinances.domain.report.MonthEvolution
 import io.github.igornunesfontoura.yourfinances.ui.format.formatCents
 import io.github.igornunesfontoura.yourfinances.ui.format.formatMonth
 import io.github.igornunesfontoura.yourfinances.ui.format.formatShortMonth
+import io.github.igornunesfontoura.yourfinances.ui.theme.finance
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -157,8 +158,8 @@ private fun CategoryBudgetRow(spending: CategorySpending) {
  */
 @Composable
 private fun EvolutionChart(evolution: List<MonthEvolution>) {
-    val incomeColor = MaterialTheme.colorScheme.primary
-    val expenseColor = MaterialTheme.colorScheme.tertiary
+    val incomeColor = MaterialTheme.finance.income
+    val expenseColor = MaterialTheme.finance.expense
     val max = evolution.maxOfOrNull { maxOf(it.totals.incomeCents, it.totals.expensesCents) }?.takeIf { it > 0 } ?: 1L
     val description = stringResource(R.string.reports_chart_description)
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {

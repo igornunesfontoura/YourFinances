@@ -17,7 +17,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -47,6 +46,7 @@ import io.github.igornunesfontoura.yourfinances.domain.model.DateBasis
 import io.github.igornunesfontoura.yourfinances.domain.model.Entry
 import io.github.igornunesfontoura.yourfinances.domain.model.EntryStatus
 import io.github.igornunesfontoura.yourfinances.domain.model.EntryType
+import io.github.igornunesfontoura.yourfinances.ui.components.AppCard
 import io.github.igornunesfontoura.yourfinances.ui.format.formatCents
 import io.github.igornunesfontoura.yourfinances.ui.format.formatDay
 import io.github.igornunesfontoura.yourfinances.ui.format.formatMonth
@@ -186,7 +186,7 @@ private fun BasisSelector(basis: DateBasis, onBasisChange: (DateBasis) -> Unit) 
 
 @Composable
 private fun TotalsCard(totals: MonthTotals) {
-    Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+    AppCard(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             TotalLine(R.string.month_income, totals.incomeCents)
             TotalLine(R.string.month_expenses, totals.expensesCents)

@@ -14,7 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -40,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.igornunesfontoura.yourfinances.R
 import io.github.igornunesfontoura.yourfinances.domain.installment.InstallmentProgress
+import io.github.igornunesfontoura.yourfinances.ui.components.AppCard
 import io.github.igornunesfontoura.yourfinances.ui.components.ConfirmDialog
 import io.github.igornunesfontoura.yourfinances.ui.format.formatCents
 import io.github.igornunesfontoura.yourfinances.ui.format.formatMonth
@@ -137,7 +137,7 @@ private fun SectionTitle(text: Int) {
 
 @Composable
 private fun CommittedCard(committed: List<Pair<YearMonth, Long>>) {
-    Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+    AppCard(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(stringResource(R.string.installments_committed), style = MaterialTheme.typography.titleSmall)
             committed.forEach { (month, cents) ->

@@ -17,7 +17,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -41,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.igornunesfontoura.yourfinances.R
+import io.github.igornunesfontoura.yourfinances.ui.components.AppCard
 import io.github.igornunesfontoura.yourfinances.ui.format.formatCents
 import io.github.igornunesfontoura.yourfinances.ui.format.formatMonth
 import org.koin.androidx.compose.koinViewModel
@@ -202,7 +202,7 @@ private fun AvailableHeader(state: HomeUiState) {
 @Composable
 private fun Breakdown(state: HomeUiState, onEditGoal: () -> Unit) {
     val available = state.available
-    Card(Modifier.fillMaxWidth()) {
+    AppCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(vertical = 8.dp)) {
             BreakdownLine(R.string.home_income, stringResource(R.string.amount_income, formatCents(available.incomeCents)))
             if (available.withdrawalsCents > 0) {

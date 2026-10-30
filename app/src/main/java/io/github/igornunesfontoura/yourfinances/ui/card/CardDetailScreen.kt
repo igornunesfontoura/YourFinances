@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.igornunesfontoura.yourfinances.R
 import io.github.igornunesfontoura.yourfinances.domain.card.InvoiceStatus
 import io.github.igornunesfontoura.yourfinances.domain.card.InvoiceSummary
+import io.github.igornunesfontoura.yourfinances.ui.components.AppCard
 import io.github.igornunesfontoura.yourfinances.ui.format.formatCents
 import io.github.igornunesfontoura.yourfinances.ui.format.formatShortDate
 import io.github.igornunesfontoura.yourfinances.ui.format.label
@@ -125,7 +125,7 @@ private fun InvoiceCard(
     onMarkPaid: () -> Unit,
     onUnmarkPaid: () -> Unit,
 ) {
-    Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)) {
+    AppCard(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)) {
         Column(Modifier.clickable(onClick = onToggle).padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.invoice_due_on, formatShortDate(invoice.dueDate)), style = MaterialTheme.typography.titleSmall)
