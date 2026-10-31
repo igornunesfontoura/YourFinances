@@ -9,6 +9,7 @@ import io.github.igornunesfontoura.yourfinances.domain.budget.monthTotals
 import io.github.igornunesfontoura.yourfinances.domain.model.DateBasis
 import io.github.igornunesfontoura.yourfinances.domain.model.Entry
 import io.github.igornunesfontoura.yourfinances.domain.entry.confirmed
+import io.github.igornunesfontoura.yourfinances.ui.components.SelectedMonth
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,14 +36,15 @@ data class MonthUiState(
     val cardNames: Map<Long, String> = emptyMap(),
 )
 
-/** Opens on [initialMonth], the month the main screen was showing. */
+/** Shows the month of [selectedMonth], shared with the main screen. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MonthViewModel(
-    initialMonth: YearMonth,
+    private val selectedMonth: SelectedMonth,
     private val entries: EntryRepository,
     cards: CreditCardRepository,
 ) : ViewModel() {
-    private val selection = MutableStateFlow(initialMonth to DateBasis.ACCRUAL)
+    private val basis = MutableStateFlow(DateBasis.ACCRUAL)
+    private val selection = selectedMonth.value.combine(basis) { month, basis -> month to basis }
     private val actionFailed = MutableStateFlow(false)
 
     val state: StateFlow<MonthUiState> = selection
@@ -64,14 +66,16 @@ class MonthViewModel(
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
-            selection.value.let { (month, basis) -> MonthUiState(month, basis) },
+            MonthUiState(selectedMonth.value.value, basis.value),
         )
 
-    fun previousMonth() = selection.update { (month, basis) -> month.minusMonths(1) to basis }
+    fun previousMonth() = selectedMonth.previous()
 
-    fun nextMonth() = selection.update { (month, basis) -> month.plusMonths(1) to basis }
+    fun nextMonth() = selectedMonth.next()
 
-    fun setBasis(basis: DateBasis) = selection.update { (month, _) -> month to basis }
+    fun setBasis(basis: DateBasis) {
+        this.basis.value = basis
+    }
 
     /** One tap: the predicted entry happened with the predicted values. */
     fun confirm(entry: Entry) {

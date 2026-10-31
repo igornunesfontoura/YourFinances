@@ -1,6 +1,5 @@
 package io.github.igornunesfontoura.yourfinances.ui.month
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,17 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -31,6 +24,7 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,25 +38,20 @@ import io.github.igornunesfontoura.yourfinances.R
 import io.github.igornunesfontoura.yourfinances.domain.budget.MonthTotals
 import io.github.igornunesfontoura.yourfinances.domain.model.DateBasis
 import io.github.igornunesfontoura.yourfinances.domain.model.Entry
-import io.github.igornunesfontoura.yourfinances.domain.model.EntryStatus
-import io.github.igornunesfontoura.yourfinances.domain.model.EntryType
 import io.github.igornunesfontoura.yourfinances.ui.components.AppCard
+import io.github.igornunesfontoura.yourfinances.ui.components.EntryRow
+import io.github.igornunesfontoura.yourfinances.ui.components.MonthSwitcher
 import io.github.igornunesfontoura.yourfinances.ui.format.formatCents
 import io.github.igornunesfontoura.yourfinances.ui.format.formatDay
-import io.github.igornunesfontoura.yourfinances.ui.format.formatMonth
 import io.github.igornunesfontoura.yourfinances.ui.format.hint
 import io.github.igornunesfontoura.yourfinances.ui.format.label
 import org.koin.androidx.compose.koinViewModel
-import org.koin.core.parameter.parametersOf
-import java.time.YearMonth
 
 @Composable
 fun MonthRoute(
-    month: YearMonth,
-    onBack: () -> Unit,
     onAddEntry: () -> Unit,
     onOpenEntry: (Long) -> Unit,
-    viewModel: MonthViewModel = koinViewModel(key = "month-$month") { parametersOf(month) },
+    viewModel: MonthViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     MonthScreen(
@@ -74,7 +63,6 @@ fun MonthRoute(
         onOpenEntry = onOpenEntry,
         onConfirmEntry = viewModel::confirm,
         onDismissError = viewModel::dismissError,
-        onBack = onBack,
     )
 }
 
@@ -89,7 +77,6 @@ fun MonthScreen(
     onOpenEntry: (Long) -> Unit,
     onConfirmEntry: (Entry) -> Unit,
     onDismissError: () -> Unit,
-    onBack: () -> Unit,
 ) {
     val snackbar = remember { SnackbarHostState() }
     val errorMessage = stringResource(R.string.save_failed)
@@ -104,24 +91,16 @@ fun MonthScreen(
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(formatMonth(state.month)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back))
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onPreviousMonth) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, stringResource(R.string.month_previous))
-                    }
-                    IconButton(onClick = onNextMonth) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, stringResource(R.string.month_next))
-                    }
-                },
+                title = { MonthSwitcher(state.month, onPreviousMonth, onNextMonth) },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddEntry) {
+            FloatingActionButton(
+                onClick = onAddEntry,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ) {
                 Icon(Icons.Filled.Add, stringResource(R.string.entry_add))
             }
         },
@@ -204,42 +183,4 @@ private fun TotalLine(label: Int, cents: Long, emphasized: Boolean = false) {
         Text(stringResource(label), style = style)
         Text(formatCents(cents), style = style)
     }
-}
-
-@Composable
-private fun EntryRow(entry: Entry, cardName: String?, onClick: () -> Unit, onConfirm: () -> Unit) {
-    val title = entry.description.ifBlank { stringResource(entry.type.label) }
-    val details = buildList {
-        add(stringResource(entry.type.label))
-        if (entry.installmentNumber != null && entry.installmentCount != null) {
-            add(stringResource(R.string.entry_installment, entry.installmentNumber, entry.installmentCount))
-        }
-        if (cardName != null) add(cardName)
-        if (entry.status == EntryStatus.PREDICTED) add(stringResource(R.string.entry_predicted))
-    }.joinToString(stringResource(R.string.entry_details_separator))
-    val isIncome = entry.type.isInflow
-    ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
-        leadingContent = if (entry.status == EntryStatus.PREDICTED) {
-            {
-                IconButton(onClick = onConfirm) {
-                    Icon(Icons.Outlined.CheckCircle, stringResource(R.string.entry_confirm))
-                }
-            }
-        } else {
-            null
-        },
-        headlineContent = { Text(title) },
-        supportingContent = { Text(details) },
-        trailingContent = {
-            Text(
-                text = stringResource(
-                    if (isIncome) R.string.amount_income else R.string.amount_expense,
-                    formatCents(entry.amountCents),
-                ),
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (isIncome) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-            )
-        },
-    )
 }

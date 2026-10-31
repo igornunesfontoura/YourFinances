@@ -8,6 +8,7 @@ import io.github.igornunesfontoura.yourfinances.domain.model.EntryType
 import io.github.igornunesfontoura.yourfinances.testing.FakeCreditCardRepository
 import io.github.igornunesfontoura.yourfinances.testing.FakeEntryRepository
 import io.github.igornunesfontoura.yourfinances.testing.MainDispatcherExtension
+import io.github.igornunesfontoura.yourfinances.ui.components.SelectedMonth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -43,9 +44,19 @@ class MonthViewModelTest {
 
     /** A subscriber keeps the WhileSubscribed state flowing. */
     private fun TestScope.subscribed(): MonthViewModel {
-        val viewModel = MonthViewModel(YearMonth.of(2026, 3), repository, FakeCreditCardRepository(listOf(CreditCard(id = 3, name = "Nubank", closingDay = 1, dueDay = 10))))
+        val viewModel = MonthViewModel(SelectedMonth(YearMonth.of(2026, 3)), repository, FakeCreditCardRepository(listOf(CreditCard(id = 3, name = "Nubank", closingDay = 1, dueDay = 10))))
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
         return viewModel
+    }
+
+    @Test
+    fun `follows the month switched on another tab`() = runTest {
+        val selection = SelectedMonth(YearMonth.of(2026, 3))
+        val viewModel = MonthViewModel(selection, repository, FakeCreditCardRepository(emptyList()))
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
+        selection.next()
+        assertEquals(YearMonth.of(2026, 4), viewModel.state.value.month)
+        assertEquals(listOf(LocalDate.of(2026, 4, 1)), viewModel.state.value.days.map { it.date })
     }
 
     @Test

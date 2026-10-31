@@ -5,6 +5,7 @@ import io.github.igornunesfontoura.yourfinances.domain.model.Entry
 import io.github.igornunesfontoura.yourfinances.domain.model.EntryStatus
 import io.github.igornunesfontoura.yourfinances.domain.model.EntryType
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.YearMonth
@@ -137,5 +138,47 @@ class AvailableToSpendTest {
     @Test
     fun `empty month leaves only the goal`() {
         assertEquals(-50000L, availableToSpend(emptyList(), march, 50000, DateBasis.CASH).availableCents)
+    }
+
+    @Test
+    fun `committed share is what is spent or set aside over what came in`() {
+        val entries = listOf(
+            entry(EntryType.INCOME, 300000),
+            entry(EntryType.WITHDRAWAL, 100000),
+            entry(EntryType.FIXED_EXPENSE, 150000),
+            entry(EntryType.FLEXIBLE_EXPENSE, 50000),
+        )
+        assertEquals(0.75, availableToSpend(entries, march, 100000, DateBasis.CASH).committedShare)
+    }
+
+    @Test
+    fun `committed share goes above one when overspent`() {
+        val entries = listOf(entry(EntryType.INCOME, 100000), entry(EntryType.FIXED_EXPENSE, 150000))
+        assertEquals(1.5, availableToSpend(entries, march, 0, DateBasis.CASH).committedShare)
+    }
+
+    @Test
+    fun `committed share is null without money coming in`() {
+        val entries = listOf(entry(EntryType.FIXED_EXPENSE, 150000))
+        assertNull(availableToSpend(entries, march, 0, DateBasis.CASH).committedShare)
+    }
+
+    @Test
+    fun `spending is fixed plus flexible, savings apart`() {
+        val entries = listOf(
+            entry(EntryType.FIXED_EXPENSE, 150000),
+            entry(EntryType.FLEXIBLE_EXPENSE, 12345),
+            entry(EntryType.INVESTMENT, 50000),
+        )
+        assertEquals(162345L, availableToSpend(entries, march, 0, DateBasis.CASH).spendingCents)
+    }
+
+    @Test
+    fun `committed percent rounds down so 100 means nothing left`() {
+        val almost = listOf(entry(EntryType.INCOME, 100000), entry(EntryType.FIXED_EXPENSE, 99960))
+        assertEquals(99, availableToSpend(almost, march, 0, DateBasis.CASH).committedPercent)
+        val all = listOf(entry(EntryType.INCOME, 100000), entry(EntryType.FIXED_EXPENSE, 100000))
+        assertEquals(100, availableToSpend(all, march, 0, DateBasis.CASH).committedPercent)
+        assertNull(availableToSpend(emptyList(), march, 0, DateBasis.CASH).committedPercent)
     }
 }

@@ -17,6 +17,7 @@ import io.github.igornunesfontoura.yourfinances.R
 import io.github.igornunesfontoura.yourfinances.data.security.DatabaseRecovery
 import io.github.igornunesfontoura.yourfinances.data.security.KeyStatus
 import io.github.igornunesfontoura.yourfinances.data.settings.Settings
+import io.github.igornunesfontoura.yourfinances.ui.components.SelectedMonth
 import io.github.igornunesfontoura.yourfinances.ui.lock.AppLock
 import io.github.igornunesfontoura.yourfinances.ui.lock.AuthRequest
 import io.github.igornunesfontoura.yourfinances.ui.lock.DeviceAuthenticator
@@ -28,6 +29,8 @@ import io.github.igornunesfontoura.yourfinances.ui.theme.YourFinancesTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
+import java.time.Clock
+import java.time.YearMonth
 
 /** A FragmentActivity because BiometricPrompt needs one. */
 class MainActivity : FragmentActivity() {
@@ -35,10 +38,14 @@ class MainActivity : FragmentActivity() {
     private val settings: Settings by inject()
     private val deviceLock: DeviceLock by inject()
     private val recovery: DatabaseRecovery by inject()
+    private val selectedMonth: SelectedMonth by inject()
+    private val clock: Clock by inject()
     private lateinit var authenticator: DeviceAuthenticator
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // A cached process keeps the month browsed last time; a new visit starts on today's month.
+        if (savedInstanceState == null) selectedMonth.reset(YearMonth.now(clock))
         // Blocks screenshots, screen recording and the recents thumbnail.
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         authenticator = DeviceAuthenticator(this) { request ->

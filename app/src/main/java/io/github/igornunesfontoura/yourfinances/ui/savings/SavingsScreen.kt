@@ -10,18 +10,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -37,27 +36,22 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SavingsRoute(
-    onBack: () -> Unit,
     onAddPocket: () -> Unit,
     onOpenPocket: (Long) -> Unit,
     viewModel: SavingsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    SavingsScreen(state, onBack, onAddPocket, onOpenPocket)
+    SavingsScreen(state, onAddPocket, onOpenPocket)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SavingsScreen(state: SavingsUiState, onBack: () -> Unit, onAddPocket: () -> Unit, onOpenPocket: (Long) -> Unit) {
+fun SavingsScreen(state: SavingsUiState, onAddPocket: () -> Unit, onOpenPocket: (Long) -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.savings_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back))
-                    }
-                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
         floatingActionButton = {

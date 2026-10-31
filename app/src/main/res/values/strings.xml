@@ -16,19 +16,40 @@
     <string name="basis_cash_hint">Pela data do pagamento</string>
 
     <!-- Home: quanto ainda posso gastar -->
-    <string name="home_available">Quanto ainda posso gastar</string>
+    <string name="home_available">Você ainda pode gastar</string>
     <string name="home_overspent">O mês já passou do orçamento</string>
     <string name="home_basis_hint">Por competência: compras no cartão contam no mês em que foram feitas.</string>
     <string name="home_income">Entradas</string>
     <string name="home_fixed">Saídas fixas</string>
-    <string name="home_goal">Meta de investimento</string>
     <string name="home_goal_unset">Definir</string>
     <string name="home_flexible">Saídas flexíveis</string>
     <string name="home_beyond_predictions">As recorrências ainda não foram previstas para este mês: as saídas fixas podem estar incompletas.</string>
     <string name="home_withdrawals">Resgates</string>
     <string name="home_saved_this_month">Guardado no mês: %1$s</string>
     <string name="home_goal_and_saved">Meta %1$s · guardado %2$s</string>
-    <string name="home_open_month">Ver lançamentos do mês</string>
+    <string name="home_committed">%1$d%% do mês já comprometido</string>
+    <string name="home_no_income">Nenhuma entrada registrada neste mês</string>
+    <string name="home_spending">Saídas</string>
+    <string name="home_where_it_goes">Para onde vai o dinheiro</string>
+    <string name="home_goal_line">Guardar no mês</string>
+    <string name="home_recent">Últimos lançamentos</string>
+    <string name="home_see_all">Ver todos</string>
+    <string name="home_recent_empty">Nada lançado neste mês ainda. Toque em + para registrar.</string>
+    <string name="tab_home">Início</string>
+    <string name="tab_entries">Lançamentos</string>
+    <string name="tab_savings">Guardado</string>
+    <string name="tab_more">Mais</string>
+    <string name="more_section_planning">Planejamento</string>
+    <string name="more_section_analysis">Análise</string>
+    <string name="more_section_data">Dados e app</string>
+    <string name="more_recurrences_hint">Salário, contas e tudo que se repete</string>
+    <string name="more_installments_hint">Compras parceladas e quando terminam</string>
+    <string name="more_cards_hint">Faturas, fechamento e vencimento</string>
+    <string name="more_subscriptions_hint">Quanto as assinaturas custam por mês</string>
+    <string name="more_reports_hint">Gastos por categoria e evolução dos meses</string>
+    <string name="more_categories_hint">Categorias e limites mensais</string>
+    <string name="more_import_hint">Trazer lançamentos de arquivos OFX ou CSV</string>
+    <string name="more_settings_hint">Bloqueio, backup e exportação</string>
 
     <!-- Investment goal -->
     <string name="goal_title">Meta de investimento</string>
@@ -70,7 +91,6 @@
     <string name="entry_apply_to_upcoming">Aplicar às próximas</string>
     <string name="entry_apply_to_upcoming_hint">Também altera a recorrência e os próximos lançamentos previstos</string>
     <string name="date_chip">%1$s: %2$s</string>
-    <string name="menu_more">Mais opções</string>
 
     <!-- Recurrences -->
     <string name="frequency_monthly">Mensal</string>

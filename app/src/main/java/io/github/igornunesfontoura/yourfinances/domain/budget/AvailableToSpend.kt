@@ -5,6 +5,7 @@ import io.github.igornunesfontoura.yourfinances.domain.model.Entry
 import io.github.igornunesfontoura.yourfinances.domain.model.EntryStatus
 import io.github.igornunesfontoura.yourfinances.domain.model.EntryType
 import java.time.YearMonth
+import kotlin.math.floor
 
 /**
  * "Quanto ainda posso gastar":
@@ -29,6 +30,23 @@ data class AvailableToSpend(
 
     val availableCents: Long
         get() = incomeCents + withdrawalsCents - fixedExpensesCents - reservedForSavingsCents - flexibleExpensesCents
+
+    /** Fixed plus flexible expenses. */
+    val spendingCents: Long get() = fixedExpensesCents + flexibleExpensesCents
+
+    /**
+     * Share of the month's money (income + confirmed withdrawals) already spent or set aside; above
+     * 1 when overspent, null when nothing came in.
+     */
+    val committedShare: Double?
+        get() {
+            val inflow = incomeCents + withdrawalsCents
+            if (inflow <= 0) return null
+            return (fixedExpensesCents + reservedForSavingsCents + flexibleExpensesCents).toDouble() / inflow
+        }
+
+    /** [committedShare] as a whole percent, rounded down so 100% only shows once nothing is left. */
+    val committedPercent: Int? get() = committedShare?.let { floor(it * 100).toInt() }
 }
 
 /**

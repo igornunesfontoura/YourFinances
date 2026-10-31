@@ -8,6 +8,7 @@ import io.github.igornunesfontoura.yourfinances.domain.model.InvestmentGoal
 import io.github.igornunesfontoura.yourfinances.testing.FakeEntryRepository
 import io.github.igornunesfontoura.yourfinances.testing.FakeInvestmentGoalRepository
 import io.github.igornunesfontoura.yourfinances.testing.MainDispatcherExtension
+import io.github.igornunesfontoura.yourfinances.ui.components.SelectedMonth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -53,7 +54,7 @@ class HomeViewModelTest {
     private val goals = FakeInvestmentGoalRepository(listOf(InvestmentGoal(YearMonth.of(2026, 3), 100000)))
 
     private fun TestScope.subscribed(): HomeViewModel {
-        val viewModel = HomeViewModel(entries, goals, clock)
+        val viewModel = HomeViewModel(entries, goals, clock, SelectedMonth(YearMonth.of(2026, 3)))
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
         return viewModel
     }
@@ -69,6 +70,22 @@ class HomeViewModelTest {
         assertEquals(500000L - 150000L - 100000L - 24000L, state.available.availableCents)
         // The contribution is compared with the goal, not subtracted again.
         assertEquals(70000L, state.savedCents)
+    }
+
+    @Test
+    fun `recent entries are the latest up to today by accrual date, newest first`() = runTest {
+        val state = subscribed().state.value
+        // Today is March 15: the card dinner of March 28 is still ahead.
+        assertEquals(listOf(3L, 2L, 5L, 1L), state.recentEntries.map { it.id })
+    }
+
+    @Test
+    fun `month switched elsewhere is the month shown`() = runTest {
+        val selection = SelectedMonth(YearMonth.of(2026, 3))
+        val viewModel = HomeViewModel(entries, goals, clock, selection)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
+        selection.next()
+        assertEquals(YearMonth.of(2026, 4), viewModel.state.value.month)
     }
 
     @Test
@@ -97,7 +114,7 @@ class HomeViewModelTest {
 
     @Test
     fun `without goals only the entries count`() = runTest {
-        val viewModel = HomeViewModel(entries, FakeInvestmentGoalRepository(), clock)
+        val viewModel = HomeViewModel(entries, FakeInvestmentGoalRepository(), clock, SelectedMonth(YearMonth.of(2026, 3)))
         assertTrue(viewModel.state.value.loading)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
         assertFalse(viewModel.state.value.hasGoal)

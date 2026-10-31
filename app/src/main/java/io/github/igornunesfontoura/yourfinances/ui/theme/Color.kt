@@ -93,18 +93,31 @@ data class FinanceColors(
     val income: Color,
     val expense: Color,
     val savings: Color,
+    /** The "disponível" card: brand color, or alarm when the month is overspent. */
+    val hero: Color,
+    val onHero: Color,
+    val heroOverspent: Color,
+    val onHeroOverspent: Color,
 )
 
 internal val LightFinanceColors = FinanceColors(
     income = Color(0xFF1B7A4F),
     expense = Color(0xFFD13B3B),
     savings = Color(0xFF4F5BD5),
+    hero = Color(0xFF1B6E4F),
+    onHero = Color(0xFFFFFFFF),
+    heroOverspent = Color(0xFFB3261E),
+    onHeroOverspent = Color(0xFFFFFFFF),
 )
 
 internal val DarkFinanceColors = FinanceColors(
     income = Color(0xFF6EDBA8),
     expense = Color(0xFFFF8A80),
     savings = Color(0xFFB9C0FF),
+    hero = Color(0xFF0E5A3F),
+    onHero = Color(0xFFE6FFF2),
+    heroOverspent = Color(0xFF8C1D18),
+    onHeroOverspent = Color(0xFFFFEDEA),
 )
 
 internal val LocalFinanceColors = staticCompositionLocalOf { LightFinanceColors }

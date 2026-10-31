@@ -6,6 +6,7 @@ import io.github.igornunesfontoura.yourfinances.ui.card.CardFormViewModel
 import io.github.igornunesfontoura.yourfinances.ui.card.CardListViewModel
 import io.github.igornunesfontoura.yourfinances.ui.category.CategoryFormViewModel
 import io.github.igornunesfontoura.yourfinances.ui.category.CategoryListViewModel
+import io.github.igornunesfontoura.yourfinances.ui.components.SelectedMonth
 import io.github.igornunesfontoura.yourfinances.ui.entry.EntryFormViewModel
 import io.github.igornunesfontoura.yourfinances.ui.goal.InvestmentGoalFormViewModel
 import io.github.igornunesfontoura.yourfinances.ui.home.HomeViewModel
@@ -27,6 +28,8 @@ import io.github.igornunesfontoura.yourfinances.ui.settings.SettingsViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
+import java.time.Clock
+import java.time.YearMonth
 
 val uiModule = module {
     single { AppLock(SystemClock::elapsedRealtime) }
@@ -40,9 +43,10 @@ val uiModule = module {
     viewModel { ImportViewModel(get(), get(), get(), get(), get()) }
     viewModel { params -> CategoryFormViewModel(params.getOrNull(), get()) }
     viewModel { params -> PocketFormViewModel(params.getOrNull(), get()) }
-    viewModel { HomeViewModel(get(), get(), get()) }
+    single { SelectedMonth(YearMonth.now(get<Clock>())) }
+    viewModel { HomeViewModel(get(), get(), get(), get()) }
     viewModel { params -> InvestmentGoalFormViewModel(params.get(), get()) }
-    viewModel { params -> MonthViewModel(params.get(), get(), get()) }
+    viewModel { MonthViewModel(get(), get(), get()) }
     viewModel { params -> EntryFormViewModel(params.getOrNull(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { RecurrenceListViewModel(get()) }
     viewModel { params -> RecurrenceFormViewModel(params.getOrNull(), get(), get(), get(), get(), get()) }

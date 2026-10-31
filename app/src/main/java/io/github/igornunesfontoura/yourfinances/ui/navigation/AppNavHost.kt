@@ -1,12 +1,38 @@
 package io.github.igornunesfontoura.yourfinances.ui.navigation
 
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Savings
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Savings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import io.github.igornunesfontoura.yourfinances.ui.card.CardDetailRoute
@@ -28,11 +54,14 @@ import io.github.igornunesfontoura.yourfinances.ui.savings.PocketFormRoute
 import io.github.igornunesfontoura.yourfinances.ui.subscription.SubscriptionsRoute
 import io.github.igornunesfontoura.yourfinances.ui.savings.SavingsRoute
 import io.github.igornunesfontoura.yourfinances.ui.settings.SettingsRoute
+import io.github.igornunesfontoura.yourfinances.R
+import io.github.igornunesfontoura.yourfinances.ui.more.MoreScreen
 import java.time.YearMonth
 
 private const val HOME = "home"
+private const val ENTRIES = "entries"
+private const val MORE = "more"
 private const val MONTH_ARG = "month"
-private const val MONTH = "month/{$MONTH_ARG}"
 private const val GOAL = "goal/{$MONTH_ARG}"
 private const val RECURRENCES = "recurrences"
 private const val INSTALLMENTS = "installments"
@@ -52,8 +81,6 @@ private const val CATEGORY_FORM = "categoryForm?$ID={$ID}"
 private const val POCKET_FORM = "pocketForm?$ID={$ID}"
 private const val CARD = "card/{$ID}"
 private const val CARD_FORM = "cardForm?$ID={$ID}"
-
-private fun monthRoute(month: YearMonth) = "month/$month"
 
 private fun goalRoute(month: YearMonth) = "goal/$month"
 
@@ -90,23 +117,84 @@ private fun NavController.closeFrom(from: NavBackStackEntry) {
     if (currentBackStackEntry?.id == from.id) popBackStack()
 }
 
-/** [onDisableLock] asks for the device credential before the app lock is turned off. */
+private enum class Tab(val route: String, @StringRes val label: Int, val icon: ImageVector, val selectedIcon: ImageVector) {
+    HOME_TAB(HOME, R.string.tab_home, Icons.Outlined.Home, Icons.Filled.Home),
+    ENTRIES_TAB(ENTRIES, R.string.tab_entries, Icons.AutoMirrored.Outlined.ReceiptLong, Icons.AutoMirrored.Filled.ReceiptLong),
+    SAVINGS_TAB(SAVINGS, R.string.tab_savings, Icons.Outlined.Savings, Icons.Filled.Savings),
+    MORE_TAB(MORE, R.string.tab_more, Icons.Outlined.GridView, Icons.Filled.GridView),
+}
+
+/** Each tab keeps its own back stack and scroll position while another tab is open. */
+private fun NavController.openTab(tab: Tab) = navigate(tab.route) {
+    popUpTo(graph.findStartDestination().id) { saveState = true }
+    launchSingleTop = true
+    restoreState = true
+}
+
+/**
+ * The bottom bar shows only on the tabs; inner screens and forms take the whole height.
+ * [onDisableLock] asks for the device credential before the app lock is turned off.
+ */
 @Composable
 fun AppNavHost(onDisableLock: () -> Unit) {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = HOME) {
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    val currentTab = Tab.entries.firstOrNull { it.route == currentRoute }
+    // Insets stay with the inner screens; only the bar's height is taken off them.
+    Scaffold(
+        contentWindowInsets = WindowInsets(0),
+        bottomBar = { if (currentTab != null) BottomBar(currentTab) { navController.openTab(it) } },
+    ) { padding ->
+        AppNavGraph(navController, onDisableLock, Modifier.padding(padding).consumeWindowInsets(padding))
+    }
+}
+
+@Composable
+private fun BottomBar(current: Tab, onSelect: (Tab) -> Unit) {
+    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
+        Tab.entries.forEach { tab ->
+            val selected = tab == current
+            NavigationBarItem(
+                selected = selected,
+                onClick = { if (!selected) onSelect(tab) },
+                icon = { Icon(if (selected) tab.selectedIcon else tab.icon, contentDescription = null) },
+                label = { Text(stringResource(tab.label)) },
+                colors = NavigationBarItemDefaults.colors(
+                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun AppNavGraph(navController: NavHostController, onDisableLock: () -> Unit, modifier: Modifier) {
+    NavHost(navController = navController, startDestination = HOME, modifier = modifier) {
         composable(HOME) { entry ->
             HomeRoute(
                 onAddEntry = { navController.navigateFrom(entry, entryRoute()) },
-                onOpenMonth = { month -> navController.navigateFrom(entry, monthRoute(month)) },
+                onOpenEntry = { id -> navController.navigateFrom(entry, entryRoute(id)) },
+                onSeeAllEntries = { navController.openTab(Tab.ENTRIES_TAB) },
                 onEditGoal = { month -> navController.navigateFrom(entry, goalRoute(month)) },
+            )
+        }
+        composable(ENTRIES) { entry ->
+            MonthRoute(
+                onAddEntry = { navController.navigateFrom(entry, entryRoute()) },
+                onOpenEntry = { id -> navController.navigateFrom(entry, entryRoute(id)) },
+            )
+        }
+        composable(MORE) { entry ->
+            MoreScreen(
                 onOpenRecurrences = { navController.navigateFrom(entry, RECURRENCES) },
                 onOpenInstallments = { navController.navigateFrom(entry, INSTALLMENTS) },
                 onOpenCards = { navController.navigateFrom(entry, CARDS) },
-                onOpenSavings = { navController.navigateFrom(entry, SAVINGS) },
-                onOpenReports = { navController.navigateFrom(entry, REPORTS) },
                 onOpenSubscriptions = { navController.navigateFrom(entry, SUBSCRIPTIONS) },
+                onOpenReports = { navController.navigateFrom(entry, REPORTS) },
                 onOpenCategories = { navController.navigateFrom(entry, CATEGORIES) },
+                onOpenImport = { navController.navigateFrom(entry, IMPORT) },
                 onOpenSettings = { navController.navigateFrom(entry, SETTINGS) },
             )
         }
@@ -131,7 +219,6 @@ fun AppNavHost(onDisableLock: () -> Unit) {
         }
         composable(SAVINGS) { entry ->
             SavingsRoute(
-                onBack = { navController.closeFrom(entry) },
                 onAddPocket = { navController.navigateFrom(entry, pocketFormRoute()) },
                 onOpenPocket = { id -> navController.navigateFrom(entry, pocketFormRoute(id)) },
             )
@@ -148,14 +235,6 @@ fun AppNavHost(onDisableLock: () -> Unit) {
         }
         composable(IMPORT) { entry ->
             ImportRoute(onDone = { navController.closeFrom(entry) })
-        }
-        composable(MONTH, arguments = monthArgument) { entry ->
-            MonthRoute(
-                month = entry.month(),
-                onBack = { navController.closeFrom(entry) },
-                onAddEntry = { navController.navigateFrom(entry, entryRoute()) },
-                onOpenEntry = { id -> navController.navigateFrom(entry, entryRoute(id)) },
-            )
         }
         composable(GOAL, arguments = monthArgument) { entry ->
             InvestmentGoalFormRoute(month = entry.month(), onDone = { navController.closeFrom(entry) })

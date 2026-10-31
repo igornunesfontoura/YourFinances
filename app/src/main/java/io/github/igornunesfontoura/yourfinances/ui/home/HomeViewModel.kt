@@ -8,17 +8,17 @@ import io.github.igornunesfontoura.yourfinances.domain.budget.AvailableToSpend
 import io.github.igornunesfontoura.yourfinances.domain.budget.availableToSpend
 import io.github.igornunesfontoura.yourfinances.domain.budget.goalFor
 import io.github.igornunesfontoura.yourfinances.domain.model.DateBasis
+import io.github.igornunesfontoura.yourfinances.domain.model.Entry
 import io.github.igornunesfontoura.yourfinances.domain.recurrence.isBeyondPredictions
 import io.github.igornunesfontoura.yourfinances.domain.savings.savedInMonthCents
+import io.github.igornunesfontoura.yourfinances.ui.components.SelectedMonth
 import io.github.igornunesfontoura.yourfinances.ui.components.todayFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import java.time.Clock
 import java.time.YearMonth
 
@@ -32,16 +32,25 @@ data class HomeUiState(
     val savedCents: Long = 0,
     /** Recurring entries are not generated for this month yet, so the number leaves them out. */
     val beyondPredictions: Boolean = false,
+    /** The latest entries of the month up to today, newest first; upcoming predictions are left out. */
+    val recentEntries: List<Entry> = emptyList(),
     val loading: Boolean = true,
 ) {
     val month: YearMonth get() = available.month
 }
 
+private const val RECENT_ENTRIES = 5
+
 private fun emptyState(month: YearMonth) = HomeUiState(availableToSpend(emptyList(), month, 0, HOME_BASIS))
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class HomeViewModel(entries: EntryRepository, goals: InvestmentGoalRepository, clock: Clock) : ViewModel() {
-    private val month = MutableStateFlow(YearMonth.now(clock))
+class HomeViewModel(
+    entries: EntryRepository,
+    goals: InvestmentGoalRepository,
+    clock: Clock,
+    private val selection: SelectedMonth,
+) : ViewModel() {
+    private val month = selection.value
 
     /** The month the arrows chose, even before its numbers arrive in [state]. */
     val selectedMonth: YearMonth get() = month.value
@@ -55,13 +64,17 @@ class HomeViewModel(entries: EntryRepository, goals: InvestmentGoalRepository, c
                     hasGoal = goal != null,
                     savedCents = savedInMonthCents(list, month, today),
                     beyondPredictions = isBeyondPredictions(month, today),
+                    recentEntries = list
+                        .filter { !HOME_BASIS.dateOf(it).isAfter(today) }
+                        .sortedWith(compareByDescending<Entry> { HOME_BASIS.dateOf(it) }.thenByDescending { it.id })
+                        .take(RECENT_ENTRIES),
                     loading = false,
                 )
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyState(month.value))
 
-    fun previousMonth() = month.update { it.minusMonths(1) }
+    fun previousMonth() = selection.previous()
 
-    fun nextMonth() = month.update { it.plusMonths(1) }
+    fun nextMonth() = selection.next()
 }
