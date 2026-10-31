@@ -38,4 +38,7 @@ interface RecurrenceDao {
 
     @Query("SELECT slot FROM recurrence_skips WHERE recurrence_id = :recurrenceId")
     suspend fun skippedSlots(recurrenceId: Long): List<LocalDate>
+
+    @Query("DELETE FROM recurrence_skips WHERE recurrence_id = :recurrenceId")
+    suspend fun deleteSkips(recurrenceId: Long)
 }

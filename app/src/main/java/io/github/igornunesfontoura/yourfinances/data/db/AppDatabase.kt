@@ -40,7 +40,7 @@ import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
         InvestmentGoalEntity::class,
         SavingsPocketEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

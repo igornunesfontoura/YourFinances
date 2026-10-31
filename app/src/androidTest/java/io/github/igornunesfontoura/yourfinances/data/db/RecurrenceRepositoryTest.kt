@@ -118,6 +118,83 @@ class RecurrenceRepositoryTest {
         assertEquals(5490L, recurrences.getById(id)!!.amountCents)
     }
 
+    private val salary = Recurrence(
+        type = EntryType.INCOME,
+        amountCents = 200000,
+        description = "Salário",
+        frequency = Frequency.TWICE_MONTHLY,
+        dayOfMonth = 16,
+        secondDayOfMonth = 31,
+        secondAmountCents = 300000,
+        startsOn = LocalDate.of(2026, 1, 1),
+    )
+
+    @Test
+    fun twiceMonthlyPredictsBothPaymentsEachMonth() = runTest {
+        recurrences.add(salary, window)
+        val result = all()
+        assertEquals(
+            listOf(
+                LocalDate.of(2026, 3, 16), LocalDate.of(2026, 3, 31),
+                LocalDate.of(2026, 4, 16), LocalDate.of(2026, 4, 30),
+                LocalDate.of(2026, 5, 16), LocalDate.of(2026, 5, 31),
+            ),
+            result.map { it.paidOn },
+        )
+        assertEquals(listOf(200000L, 300000L, 200000L, 300000L, 200000L, 300000L), result.map { it.amountCents })
+        assertEquals(0, recurrences.predictAll(window))
+    }
+
+    @Test
+    fun applyToUpcomingOnTheSecondPaymentChangesOnlyIt() = runTest {
+        val id = recurrences.add(salary, window)
+        val marchRest = all()[1]
+
+        val edited = marchRest.edited(EntryType.INCOME, 320000, "Salário", marchRest.occurredOn, card = null)
+        recurrences.applyToUpcoming(edited, window)
+
+        assertEquals(listOf(200000L, 320000L, 200000L, 320000L, 200000L, 320000L), all().map { it.amountCents })
+        val template = recurrences.getById(id)!!
+        assertEquals(200000L, template.amountCents)
+        assertEquals(320000L, template.secondAmountCents)
+    }
+
+    @Test
+    fun movingTheDaysAfterConfirmingTheAdvanceStillPredictsTheRest() = runTest {
+        val id = recurrences.add(salary, window)
+        entries.update(all().first().confirmed()) // March 16 advance
+
+        recurrences.update(salary.copy(id = id, dayOfMonth = 5, secondDayOfMonth = 20), window)
+
+        val march = all().filter { it.occurredOn.monthValue == 3 }
+        assertEquals(listOf(200000L, 300000L), march.map { it.amountCents })
+        assertEquals(listOf(LocalDate.of(2026, 3, 16), LocalDate.of(2026, 3, 20)), march.map { it.occurredOn })
+        assertEquals(0, recurrences.predictAll(window))
+    }
+
+    @Test
+    fun movingTheDaysAfterBothPaymentsAddsNothingToThatMonth() = runTest {
+        val id = recurrences.add(salary, window)
+        all().take(2).forEach { entries.update(it.confirmed()) }
+
+        recurrences.update(salary.copy(id = id, dayOfMonth = 1, secondDayOfMonth = 10), window)
+
+        assertEquals(500000L, all().filter { it.occurredOn.monthValue == 3 }.sumOf { it.amountCents })
+        assertEquals(0, recurrences.predictAll(window))
+    }
+
+    @Test
+    fun switchingAPaidMonthlySalaryToTwiceMonthlyDoesNotPayThatMonthAgain() = runTest {
+        val monthly = salary.copy(frequency = Frequency.MONTHLY, dayOfMonth = 5, secondDayOfMonth = null, secondAmountCents = null, amountCents = 500000)
+        val id = recurrences.add(monthly, window)
+        entries.update(all().first().confirmed()) // March 5
+
+        recurrences.update(salary.copy(id = id), window)
+
+        assertEquals(listOf(500000L), all().filter { it.occurredOn.monthValue == 3 }.map { it.amountCents })
+        assertEquals(listOf(200000L, 300000L), all().filter { it.occurredOn.monthValue == 4 }.map { it.amountCents })
+    }
+
     @Test
     fun deletingKeepsHistoryAndRemovesUpcomingPredictions() = runTest {
         val id = recurrences.add(streaming, window)

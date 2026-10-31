@@ -53,7 +53,17 @@ private fun RecurrenceRow(recurrence: Recurrence, onClick: () -> Unit) {
             Text(stringResource(R.string.recurrence_row_details, stringResource(recurrence.type.label), scheduleText(recurrence)))
         },
         leading = { IconBadge(recurrence.type.icon, recurrence.type.tint) },
-        trailing = { Text(formatCents(recurrence.amountCents), style = MaterialTheme.typography.titleSmall) },
+        trailing = {
+            val second = recurrence.secondAmountCents
+            Text(
+                if (second == null) {
+                    formatCents(recurrence.amountCents)
+                } else {
+                    stringResource(R.string.recurrence_twice_monthly_amounts, formatCents(recurrence.amountCents), formatCents(second))
+                },
+                style = MaterialTheme.typography.titleSmall,
+            )
+        },
         onClick = onClick,
     )
 }

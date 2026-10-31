@@ -45,13 +45,19 @@ val DateBasis.hint: Int
 val Frequency.label: Int
     get() = when (this) {
         Frequency.MONTHLY -> R.string.frequency_monthly
+        Frequency.TWICE_MONTHLY -> R.string.frequency_twice_monthly
         Frequency.YEARLY -> R.string.frequency_yearly
     }
 
-/** "Todo dia 10" or "Todo ano, 10 de março". */
+/** "Todo dia 10", "Todo dia 16 e 31" or "Todo ano, 10 de março". */
 @Composable
 fun scheduleText(recurrence: Recurrence): String = when (recurrence.frequency) {
     Frequency.MONTHLY -> stringResource(R.string.recurrence_schedule_monthly, recurrence.dayOfMonth)
+    Frequency.TWICE_MONTHLY -> stringResource(
+        R.string.recurrence_schedule_twice_monthly,
+        recurrence.dayOfMonth,
+        requireNotNull(recurrence.secondDayOfMonth),
+    )
     Frequency.YEARLY -> stringResource(
         R.string.recurrence_schedule_yearly,
         recurrence.dayOfMonth,

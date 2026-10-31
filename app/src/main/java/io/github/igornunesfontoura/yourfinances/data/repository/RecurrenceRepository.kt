@@ -2,11 +2,13 @@ package io.github.igornunesfontoura.yourfinances.data.repository
 
 import androidx.room.withTransaction
 import io.github.igornunesfontoura.yourfinances.data.db.AppDatabase
+import io.github.igornunesfontoura.yourfinances.data.db.entity.RecurrenceSkipEntity
 import io.github.igornunesfontoura.yourfinances.data.db.entity.toDomain
 import io.github.igornunesfontoura.yourfinances.data.db.entity.toEntity
 import io.github.igornunesfontoura.yourfinances.domain.model.Entry
 import io.github.igornunesfontoura.yourfinances.domain.model.Recurrence
 import io.github.igornunesfontoura.yourfinances.domain.recurrence.PredictionWindow
+import io.github.igornunesfontoura.yourfinances.domain.recurrence.carrySlotsFrom
 import io.github.igornunesfontoura.yourfinances.domain.recurrence.predictedEntriesBetween
 import io.github.igornunesfontoura.yourfinances.domain.recurrence.withValuesFrom
 import kotlinx.coroutines.flow.Flow
@@ -66,7 +68,11 @@ class RoomRecurrenceRepository(private val database: AppDatabase) : RecurrenceRe
         }
 
     override suspend fun update(recurrence: Recurrence, window: PredictionWindow) = database.withTransaction {
+        val previous = recurrenceDao.getById(recurrence.id)?.toDomain()
         recurrenceDao.update(recurrence.toEntity())
+        // Upcoming predictions are rebuilt anyway; only what the user confirmed or skipped carries over.
+        entryDao.deletePredictedFrom(recurrence.id, window.from)
+        if (previous != null) carrySlots(previous, recurrence)
         entryDao.deletePredictedOutside(recurrence.id, recurrence.startsOn, recurrence.endsOn)
         rebuild(recurrence, window.from, window.to)
     }
@@ -93,6 +99,21 @@ class RoomRecurrenceRepository(private val database: AppDatabase) : RecurrenceRe
 
     override suspend fun predictAll(window: PredictionWindow): Int = database.withTransaction {
         recurrenceDao.getAll().sumOf { predict(it.toDomain(), window.from, window.to) }
+    }
+
+    /** Moves used slots so they keep naming their payment under the new schedule (see carrySlotsFrom). */
+    private suspend fun carrySlots(previous: Recurrence, recurrence: Recurrence) {
+        val skips = recurrenceDao.skippedSlots(recurrence.id)
+        val scheduled = entryDao.scheduledEntries(recurrence.id)
+        val moves = recurrence.carrySlotsFrom(previous, skips + scheduled.mapNotNull { it.scheduledFor })
+        if (moves.moved.isEmpty() && moves.skipped.isEmpty()) return
+        val toMove = scheduled.filter { it.scheduledFor in moves.moved }
+        // Two steps, since (recurrence, slot) is unique and a new slot may still be another's old one.
+        entryDao.updateAll(toMove.map { it.copy(scheduledFor = null) })
+        entryDao.updateAll(toMove.map { it.copy(scheduledFor = moves.moved.getValue(requireNotNull(it.scheduledFor))) })
+        recurrenceDao.deleteSkips(recurrence.id)
+        (skips.map { moves.moved[it] ?: it } + moves.skipped).toSet()
+            .forEach { recurrenceDao.insertSkip(RecurrenceSkipEntity(recurrence.id, it)) }
     }
 
     private suspend fun rebuild(recurrence: Recurrence, from: LocalDate, to: LocalDate) {

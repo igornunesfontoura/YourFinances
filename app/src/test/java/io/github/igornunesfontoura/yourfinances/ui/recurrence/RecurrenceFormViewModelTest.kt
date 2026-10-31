@@ -67,6 +67,66 @@ class RecurrenceFormViewModelTest {
     }
 
     @Test
+    fun `a twice monthly salary saves both payments`() = runTest {
+        val viewModel = RecurrenceFormViewModel(null, repository, clock, savings, categories, FakeCreditCardRepository())
+        viewModel.onTypeChange(EntryType.INCOME)
+        viewModel.onFrequencyChange(Frequency.TWICE_MONTHLY)
+        viewModel.onAmountChange("200000")
+        viewModel.onDayChange("16")
+        assertFalse(viewModel.state.value.canSave)
+        viewModel.onSecondDayChange("31")
+        assertFalse(viewModel.state.value.canSave)
+        viewModel.onSecondAmountChange("300000")
+        viewModel.save()
+
+        val saved = repository.recurrences.value.single()
+        assertEquals(Frequency.TWICE_MONTHLY, saved.frequency)
+        assertEquals(16, saved.dayOfMonth)
+        assertEquals(200000L, saved.amountCents)
+        assertEquals(31, saved.secondDayOfMonth)
+        assertEquals(300000L, saved.secondAmountCents)
+    }
+
+    @Test
+    fun `second day not after the first blocks saving`() {
+        val viewModel = RecurrenceFormViewModel(null, repository, clock, savings, categories, FakeCreditCardRepository())
+        viewModel.onFrequencyChange(Frequency.TWICE_MONTHLY)
+        viewModel.onAmountChange("100")
+        viewModel.onSecondAmountChange("100")
+        viewModel.onDayChange("16")
+        viewModel.onSecondDayChange("10")
+        assertTrue(viewModel.state.value.secondDayInvalid)
+        assertFalse(viewModel.state.value.canSave)
+    }
+
+    @Test
+    fun `second day out of range shows even without a first day`() {
+        val viewModel = RecurrenceFormViewModel(null, repository, clock, savings, categories, FakeCreditCardRepository())
+        viewModel.onFrequencyChange(Frequency.TWICE_MONTHLY)
+        viewModel.onDayChange("")
+        viewModel.onSecondDayChange("45")
+        assertTrue(viewModel.state.value.secondDayInvalid)
+        viewModel.onSecondDayChange("20")
+        assertFalse(viewModel.state.value.secondDayInvalid)
+    }
+
+    @Test
+    fun `switching back to monthly drops the second payment`() = runTest {
+        val viewModel = RecurrenceFormViewModel(null, repository, clock, savings, categories, FakeCreditCardRepository())
+        viewModel.onFrequencyChange(Frequency.TWICE_MONTHLY)
+        viewModel.onSecondDayChange("31")
+        viewModel.onSecondAmountChange("300000")
+        viewModel.onFrequencyChange(Frequency.MONTHLY)
+        viewModel.onAmountChange("4990")
+        viewModel.onDayChange("10")
+        viewModel.save()
+
+        val saved = repository.recurrences.value.single()
+        assertEquals(null, saved.secondDayOfMonth)
+        assertEquals(null, saved.secondAmountCents)
+    }
+
+    @Test
     fun `invalid day or end before start blocks saving`() {
         val viewModel = RecurrenceFormViewModel(null, repository, clock, savings, categories, FakeCreditCardRepository())
         viewModel.onAmountChange("100")

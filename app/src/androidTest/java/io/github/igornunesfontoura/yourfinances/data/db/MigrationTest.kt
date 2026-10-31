@@ -6,6 +6,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.igornunesfontoura.yourfinances.data.db.entity.InvestmentGoalEntity
 import io.github.igornunesfontoura.yourfinances.data.db.entity.SavingsPocketEntity
+import io.github.igornunesfontoura.yourfinances.data.db.entity.toDomain
+import io.github.igornunesfontoura.yourfinances.domain.model.Frequency
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import io.github.igornunesfontoura.yourfinances.domain.model.CategoryKind
@@ -153,6 +155,31 @@ class MigrationTest {
             .build()
         try {
             assertEquals(null, database.entryDao().getById(1)!!.importKey)
+        } finally {
+            database.close()
+        }
+    }
+
+    @Test
+    fun migrate6To7KeepsRecurrencesMonthly() = runTest {
+        helper.createDatabase(name, 6).apply {
+            execSQL(
+                "INSERT INTO recurrences (id, type, amount_cents, description, frequency, day_of_month, starts_on) " +
+                    "VALUES (1, 'INCOME', 500000, 'Salário', 'MONTHLY', 5, 20500)",
+            )
+            close()
+        }
+        helper.runMigrationsAndValidate(name, 7, true, MIGRATION_6_7).close()
+
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val database = Room.databaseBuilder(context, AppDatabase::class.java, name)
+            .addMigrations(*ALL_MIGRATIONS)
+            .build()
+        try {
+            val recurrence = database.recurrenceDao().getById(1)!!.toDomain()
+            assertEquals(Frequency.MONTHLY, recurrence.frequency)
+            assertEquals(null, recurrence.secondDayOfMonth)
+            assertEquals(null, recurrence.secondAmountCents)
         } finally {
             database.close()
         }

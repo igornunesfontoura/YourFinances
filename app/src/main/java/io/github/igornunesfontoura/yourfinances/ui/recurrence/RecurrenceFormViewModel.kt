@@ -34,6 +34,8 @@ data class RecurrenceFormUiState(
     val description: String = "",
     val frequency: Frequency = Frequency.MONTHLY,
     val dayText: String = today.dayOfMonth.toString(),
+    val secondDayText: String = "",
+    val secondAmountDigits: String = "",
     val startsOn: LocalDate = today,
     val endsOn: LocalDate? = null,
     val pockets: List<SavingsPocket> = emptyList(),
@@ -50,9 +52,25 @@ data class RecurrenceFormUiState(
     val showsPayment: Boolean get() = type.canUseCard && cards.isNotEmpty()
     val amountCents: Long get() = centsFromAmountDigits(amountDigits)
     val dayOfMonth: Int? get() = dayText.toIntOrNull()?.takeIf { it in 1..31 }
+    val isTwiceMonthly: Boolean get() = frequency == Frequency.TWICE_MONTHLY
+    val secondAmountCents: Long get() = centsFromAmountDigits(secondAmountDigits)
+
+    /** The second payment's day, valid only after the first one. */
+    val secondDayOfMonth: Int?
+        get() {
+            val first = dayOfMonth ?: return null
+            return secondDayText.toIntOrNull()?.takeIf { it in (first + 1)..31 }
+        }
+
+    /** Out of 1..31, or not after a valid first day. */
+    val secondDayInvalid: Boolean
+        get() = isTwiceMonthly && secondDayText.isNotEmpty() && (dayOfMonth != null || secondDayText.toInt() !in 1..31) &&
+            secondDayOfMonth == null
     val endsBeforeStart: Boolean get() = endsOn != null && endsOn.isBefore(startsOn)
     val isBusy: Boolean get() = status.isBusy
-    val canSave: Boolean get() = !isBusy && amountCents > 0 && dayOfMonth != null && !endsBeforeStart
+    val canSave: Boolean
+        get() = !isBusy && amountCents > 0 && dayOfMonth != null && !endsBeforeStart &&
+            (!isTwiceMonthly || (secondDayOfMonth != null && secondAmountCents > 0))
 }
 
 /** Creates a recurrence when [recurrenceId] is null, otherwise edits it. */
@@ -106,6 +124,8 @@ class RecurrenceFormViewModel(
                         description = recurrence.description,
                         frequency = recurrence.frequency,
                         dayText = recurrence.dayOfMonth.toString(),
+                        secondDayText = recurrence.secondDayOfMonth?.toString().orEmpty(),
+                        secondAmountDigits = recurrence.secondAmountCents?.toString().orEmpty(),
                         startsOn = recurrence.startsOn,
                         endsOn = recurrence.endsOn,
                         pocketId = recurrence.savingsPocketId,
@@ -140,6 +160,10 @@ class RecurrenceFormViewModel(
 
     fun onDayChange(day: String) = _state.update { it.copy(dayText = day) }
 
+    fun onSecondDayChange(day: String) = _state.update { it.copy(secondDayText = day) }
+
+    fun onSecondAmountChange(input: String) = _state.update { it.copy(secondAmountDigits = normalizeAmountDigits(input)) }
+
     fun onStartChange(date: LocalDate) = _state.update { it.copy(startsOn = date) }
 
     fun onEndChange(date: LocalDate?) = _state.update { it.copy(endsOn = date) }
@@ -160,6 +184,8 @@ class RecurrenceFormViewModel(
             categoryId = current.categoryId.takeIf { current.type.categoryKind != null },
             savingsPocketId = current.pocketId.takeIf { current.type.movesSavings },
             creditCardId = current.cardId.takeIf { current.type.canUseCard },
+            secondDayOfMonth = current.secondDayOfMonth.takeIf { current.isTwiceMonthly },
+            secondAmountCents = current.secondAmountCents.takeIf { current.isTwiceMonthly },
         )
         val window = predictionWindow(LocalDate.now(clock))
         persist(updateStatus) {

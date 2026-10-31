@@ -77,4 +77,12 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
     }
 }
 
-val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+/** v7: twice-monthly recurrences (salary advance and the rest) keep their second day and amount. */
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `recurrences` ADD COLUMN `second_day_of_month` INTEGER DEFAULT NULL")
+        db.execSQL("ALTER TABLE `recurrences` ADD COLUMN `second_amount_cents` INTEGER DEFAULT NULL")
+    }
+}
+
+val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)

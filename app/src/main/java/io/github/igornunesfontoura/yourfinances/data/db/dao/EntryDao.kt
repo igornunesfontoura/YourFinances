@@ -38,6 +38,9 @@ interface EntryDao {
     @Query("SELECT scheduled_for FROM entries WHERE recurrence_id = :recurrenceId")
     suspend fun scheduledDates(recurrenceId: Long): List<LocalDate>
 
+    @Query("SELECT * FROM entries WHERE recurrence_id = :recurrenceId AND scheduled_for IS NOT NULL")
+    suspend fun scheduledEntries(recurrenceId: Long): List<EntryEntity>
+
     @Query("DELETE FROM entries WHERE recurrence_id = :recurrenceId AND status = 'PREDICTED' AND scheduled_for >= :from")
     suspend fun deletePredictedFrom(recurrenceId: Long, from: LocalDate)
 

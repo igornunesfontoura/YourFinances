@@ -21,6 +21,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.igornunesfontoura.yourfinances.R
 import io.github.igornunesfontoura.yourfinances.domain.model.Frequency
+import io.github.igornunesfontoura.yourfinances.ui.components.AmountField
 import io.github.igornunesfontoura.yourfinances.ui.components.ChoiceChips
 import io.github.igornunesfontoura.yourfinances.ui.components.EntryTypeSelector
 import io.github.igornunesfontoura.yourfinances.ui.components.FormCard
@@ -67,11 +68,14 @@ fun RecurrenceFormRoute(
         HeroAmountField(
             digits = state.amountDigits,
             onDigitsChange = viewModel::onAmountChange,
-            label = R.string.entry_amount,
+            label = if (state.isTwiceMonthly) R.string.recurrence_first_payment else R.string.entry_amount,
             color = state.type.tint,
             enabled = enabled,
             onDone = viewModel::save,
         )
+        if (state.isTwiceMonthly) {
+            AmountField(state.secondAmountDigits, viewModel::onSecondAmountChange, R.string.recurrence_second_payment, enabled, onDone = viewModel::save)
+        }
         EntryTypeSelector(state.type, viewModel::onTypeChange, enabled)
         FormCard {
             OutlinedTextField(
@@ -111,10 +115,20 @@ fun RecurrenceFormRoute(
             NumberField(
                 value = state.dayText,
                 onValueChange = viewModel::onDayChange,
-                label = R.string.recurrence_day,
+                label = if (state.isTwiceMonthly) R.string.recurrence_first_day else R.string.recurrence_day,
                 enabled = enabled,
                 supportingText = R.string.recurrence_day_hint,
             )
+            if (state.isTwiceMonthly) {
+                NumberField(
+                    value = state.secondDayText,
+                    onValueChange = viewModel::onSecondDayChange,
+                    label = R.string.recurrence_second_day,
+                    enabled = enabled,
+                    supportingText = R.string.recurrence_second_day_hint,
+                )
+                if (state.secondDayInvalid) ErrorText(R.string.recurrence_second_day_invalid)
+            }
             DateChip(state.startsOn, state.today, R.string.recurrence_starts_on, enabled, viewModel::onStartChange)
             if (state.frequency == Frequency.YEARLY) {
                 HintText(stringResource(R.string.recurrence_yearly_hint, formatMonthName(state.startsOn.month)))

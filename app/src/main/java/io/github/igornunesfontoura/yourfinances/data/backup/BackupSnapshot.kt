@@ -51,7 +51,7 @@ data class BackupTables(
  * files hold an entry type there, read as its kind); 4 adds the import key of imported entries.
  */
 object BackupFormat {
-    const val VERSION = 4
+    const val VERSION = 5
 
     private val json = Json { encodeDefaults = true }
 
@@ -73,7 +73,7 @@ object BackupFormat {
             val text = bytes.toString(Charsets.UTF_8)
             val format = json.parseToJsonElement(text).jsonObject["format"]?.jsonPrimitive?.int
             val parser = when (format) {
-                VERSION, 2, 3 -> json
+                VERSION, 2, 3, 4 -> json
                 1 -> jsonV1
                 else -> throw BackupInvalidException()
             }
@@ -162,6 +162,9 @@ private data class RecurrenceRow(
     val categoryId: Long?,
     val savingsPocketId: Long? = null,
     val creditCardId: Long? = null,
+    /** Since version 5. */
+    val secondDayOfMonth: Int? = null,
+    val secondAmountCents: Long? = null,
 )
 
 @Serializable
@@ -223,7 +226,7 @@ private fun BackupTables.toSnapshot(exportedOn: LocalDate) = BackupSnapshot(
     recurrences = recurrences.map {
         RecurrenceRow(
             it.id, it.type, it.amountCents, it.description, it.frequency, it.dayOfMonth, it.startsOn, it.endsOn,
-            it.categoryId, it.savingsPocketId, it.creditCardId,
+            it.categoryId, it.savingsPocketId, it.creditCardId, it.secondDayOfMonth, it.secondAmountCents,
         )
     },
     recurrenceSkips = recurrenceSkips.map { RecurrenceSkipRow(it.recurrenceId, it.slot) },
@@ -250,7 +253,7 @@ private fun BackupSnapshot.toTables() = BackupTables(
     recurrences = recurrences.map {
         RecurrenceEntity(
             it.id, it.type, it.amountCents, it.description, it.frequency, it.dayOfMonth, it.startsOn, it.endsOn,
-            it.categoryId, it.savingsPocketId, it.creditCardId,
+            it.categoryId, it.savingsPocketId, it.creditCardId, it.secondDayOfMonth, it.secondAmountCents,
         )
     },
     recurrenceSkips = recurrenceSkips.map { RecurrenceSkipEntity(it.recurrenceId, it.slot) },

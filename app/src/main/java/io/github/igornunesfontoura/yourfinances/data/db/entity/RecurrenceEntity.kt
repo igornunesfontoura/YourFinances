@@ -46,6 +46,8 @@ data class RecurrenceEntity(
     @ColumnInfo(name = "category_id") val categoryId: Long?,
     @ColumnInfo(name = "savings_pocket_id") val savingsPocketId: Long? = null,
     @ColumnInfo(name = "credit_card_id") val creditCardId: Long? = null,
+    @ColumnInfo(name = "second_day_of_month") val secondDayOfMonth: Int? = null,
+    @ColumnInfo(name = "second_amount_cents") val secondAmountCents: Long? = null,
 )
 
 fun RecurrenceEntity.toDomain() = Recurrence(
@@ -60,6 +62,8 @@ fun RecurrenceEntity.toDomain() = Recurrence(
     categoryId = categoryId,
     savingsPocketId = savingsPocketId,
     creditCardId = creditCardId,
+    secondDayOfMonth = secondDayOfMonth,
+    secondAmountCents = secondAmountCents,
 )
 
 fun Recurrence.toEntity() = RecurrenceEntity(
@@ -74,4 +78,6 @@ fun Recurrence.toEntity() = RecurrenceEntity(
     categoryId = categoryId,
     savingsPocketId = savingsPocketId,
     creditCardId = creditCardId,
+    secondDayOfMonth = secondDayOfMonth,
+    secondAmountCents = secondAmountCents,
 )

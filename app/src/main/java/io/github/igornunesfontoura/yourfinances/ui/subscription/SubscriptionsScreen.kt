@@ -59,7 +59,15 @@ private fun SubscriptionRow(subscription: Subscription, cardName: String?, onCli
     val recurrence = subscription.recurrence
     val next = subscription.nextChargeOn
     val details = buildList {
-        add(stringResource(if (recurrence.frequency == Frequency.MONTHLY) R.string.subscription_monthly else R.string.subscription_yearly))
+        add(
+            stringResource(
+                when (recurrence.frequency) {
+                    Frequency.MONTHLY -> R.string.subscription_monthly
+                    Frequency.TWICE_MONTHLY -> R.string.subscription_twice_monthly
+                    Frequency.YEARLY -> R.string.subscription_yearly
+                },
+            ),
+        )
         next?.let { add(stringResource(R.string.subscription_next, formatShortDate(it))) }
         if (cardName != null) add(cardName)
     }.joinToString(stringResource(R.string.entry_details_separator))
@@ -67,7 +75,7 @@ private fun SubscriptionRow(subscription: Subscription, cardName: String?, onCli
         headline = recurrence.description.ifBlank { stringResource(R.string.subscription_untitled) },
         supporting = { Text(details) },
         leading = { IconBadge(Icons.Outlined.Subscriptions, MaterialTheme.finance.expense) },
-        trailing = { Text(formatCents(recurrence.amountCents), style = MaterialTheme.typography.titleSmall) },
+        trailing = { Text(formatCents(recurrence.cycleAmountCents), style = MaterialTheme.typography.titleSmall) },
         onClick = onClick,
     )
 }

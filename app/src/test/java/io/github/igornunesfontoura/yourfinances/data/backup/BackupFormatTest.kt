@@ -66,7 +66,7 @@ class BackupFormatTest {
     fun `the format is plain and stable`() {
         val json = json()
         listOf(
-            "\"format\":4",
+            "\"format\":5",
             "\"exportedOn\":\"2026-10-28\"",
             "\"occurredOn\":\"2026-03-05\"",
             "\"amountCents\":4590",
@@ -81,7 +81,7 @@ class BackupFormatTest {
 
     @Test
     fun `newer formats are refused`() {
-        assertThrows<BackupInvalidException> { decode(json().replace("\"format\":4", "\"format\":5")) }
+        assertThrows<BackupInvalidException> { decode(json().replace("\"format\":5", "\"format\":6")) }
     }
 
     @Test
@@ -115,7 +115,7 @@ class BackupFormatTest {
         assertThrows<BackupInvalidException> { decode("not json") }
         assertThrows<BackupInvalidException> { decode(json().replace("2026-03-05", "2026-13-05")) }
         assertThrows<BackupInvalidException> { decode(json().replace("\"FLEXIBLE_EXPENSE\"", "\"GIFT\"")) }
-        assertThrows<BackupInvalidException> { decode(json().replace("{\"format\":4,", "{\"format\":4,\"extra\":true,")) }
+        assertThrows<BackupInvalidException> { decode(json().replace("{\"format\":5,", "{\"format\":5,\"extra\":true,")) }
     }
 
     @Test
@@ -139,5 +139,28 @@ class BackupFormatTest {
             .replace("\"type\":\"EXPENSE\",\"monthlyLimitCents\":50000", "\"type\":\"FLEXIBLE_EXPENSE\"")
         assertEquals(CategoryKind.EXPENSE, decode(v2).categories.single().kind)
         assertThrows<BackupInvalidException> { decode(json().replace("\"type\":\"EXPENSE\"", "\"type\":\"GIFT\"")) }
+    }
+
+    @Test
+    fun `twice monthly recurrences keep their second payment`() {
+        val salary = RecurrenceEntity(
+            10, EntryType.INCOME, 200000, "Salário", Frequency.TWICE_MONTHLY, 16, march5, null, null,
+            secondDayOfMonth = 31, secondAmountCents = 300000,
+        )
+        val withSalary = tables.copy(recurrences = tables.recurrences + salary)
+        assertEquals(withSalary, decode(json(withSalary)))
+    }
+
+    @Test
+    fun `a twice monthly recurrence without its second day is refused`() {
+        val broken = RecurrenceEntity(10, EntryType.INCOME, 200000, "Salário", Frequency.TWICE_MONTHLY, 16, march5, null, null)
+        assertThrows<BackupInvalidException> { decode(json(tables.copy(recurrences = listOf(broken)))) }
+    }
+
+    @Test
+    fun `version 4 backups, made before twice monthly recurrences, still restore`() {
+        val v4 = json().replace("\"format\":5", "\"format\":4").replace(",\"secondDayOfMonth\":null,\"secondAmountCents\":null", "")
+        assertTrue(!v4.contains("secondDayOfMonth"))
+        assertEquals(tables, decode(v4))
     }
 }

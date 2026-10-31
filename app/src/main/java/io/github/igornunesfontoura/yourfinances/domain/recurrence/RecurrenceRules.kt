@@ -26,12 +26,17 @@ fun predictionWindow(today: LocalDate): PredictionWindow {
 fun isBeyondPredictions(month: YearMonth, today: LocalDate): Boolean =
     month > YearMonth.from(predictionWindow(today).to)
 
-/** "Aplicar às próximas": the template takes the values the user just set on one occurrence. */
+/**
+ * "Aplicar às próximas": the template takes the values the user just set on one occurrence. For a
+ * twice-monthly recurrence the amount goes to the payment the occurrence is; the rest is shared.
+ */
 fun Recurrence.withValuesFrom(entry: Entry): Recurrence {
     require(entry.recurrenceId == id) { "entry does not belong to this recurrence" }
+    val second = paymentOf(entry.scheduledFor ?: entry.occurredOn) == 1
     return copy(
         type = entry.type,
-        amountCents = entry.amountCents,
+        amountCents = if (second) amountCents else entry.amountCents,
+        secondAmountCents = if (second) entry.amountCents else secondAmountCents,
         description = entry.description,
         categoryId = entry.categoryId,
         savingsPocketId = entry.savingsPocketId,

@@ -2,6 +2,7 @@ package io.github.igornunesfontoura.yourfinances.domain.subscription
 
 import io.github.igornunesfontoura.yourfinances.domain.model.EntryType
 import io.github.igornunesfontoura.yourfinances.domain.model.Recurrence
+import io.github.igornunesfontoura.yourfinances.domain.recurrence.amountOn
 import io.github.igornunesfontoura.yourfinances.domain.recurrence.occurrencesBetween
 import java.time.LocalDate
 
@@ -12,7 +13,7 @@ import java.time.LocalDate
 data class Subscription(val recurrence: Recurrence, val upcomingCharges: List<LocalDate>) {
     val nextChargeOn: LocalDate? get() = upcomingCharges.firstOrNull()
 
-    val yearlyCents: Long get() = recurrence.amountCents * upcomingCharges.size
+    val yearlyCents: Long get() = upcomingCharges.sumOf { recurrence.amountOn(it) }
 }
 
 data class SubscriptionsSummary(
