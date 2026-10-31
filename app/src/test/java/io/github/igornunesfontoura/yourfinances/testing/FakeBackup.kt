@@ -63,6 +63,12 @@ class FakeSettings(lockEnabled: Boolean = true) : Settings {
         lockEnabled.value = enabled
     }
 
+    override val welcomeSeen = MutableStateFlow(false)
+
+    override fun setWelcomeSeen() {
+        welcomeSeen.value = true
+    }
+
     override fun csvMapping(header: List<String>) = csvMappings[header]
 
     override fun saveCsvMapping(header: List<String>, mapping: CsvMapping) {

@@ -41,6 +41,8 @@ import io.github.igornunesfontoura.yourfinances.ui.card.CardListRoute
 import io.github.igornunesfontoura.yourfinances.ui.category.CategoryFormRoute
 import io.github.igornunesfontoura.yourfinances.ui.category.CategoryListRoute
 import io.github.igornunesfontoura.yourfinances.ui.entry.EntryFormRoute
+import io.github.igornunesfontoura.yourfinances.ui.help.HelpScreen
+import io.github.igornunesfontoura.yourfinances.ui.help.WelcomeScreen
 import io.github.igornunesfontoura.yourfinances.ui.goal.InvestmentGoalFormRoute
 import io.github.igornunesfontoura.yourfinances.ui.home.HomeRoute
 import io.github.igornunesfontoura.yourfinances.ui.importing.ImportRoute
@@ -61,6 +63,8 @@ import java.time.YearMonth
 private const val HOME = "home"
 private const val ENTRIES = "entries"
 private const val MORE = "more"
+private const val HELP = "help"
+private const val WELCOME = "welcome"
 private const val MONTH_ARG = "month"
 private const val GOAL = "goal/{$MONTH_ARG}"
 private const val RECURRENCES = "recurrences"
@@ -196,7 +200,17 @@ private fun AppNavGraph(navController: NavHostController, onDisableLock: () -> U
                 onOpenCategories = { navController.navigateFrom(entry, CATEGORIES) },
                 onOpenImport = { navController.navigateFrom(entry, IMPORT) },
                 onOpenSettings = { navController.navigateFrom(entry, SETTINGS) },
+                onOpenHelp = { navController.navigateFrom(entry, HELP) },
             )
+        }
+        composable(HELP) { entry ->
+            HelpScreen(
+                onBack = { navController.closeFrom(entry) },
+                onReplayWelcome = { navController.navigateFrom(entry, WELCOME) },
+            )
+        }
+        composable(WELCOME) { entry ->
+            WelcomeScreen(onFinish = { navController.closeFrom(entry) })
         }
         composable(REPORTS) { entry ->
             ReportsRoute(onBack = { navController.closeFrom(entry) })

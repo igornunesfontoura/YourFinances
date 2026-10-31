@@ -16,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Autorenew
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -64,6 +65,7 @@ fun MoreScreen(
     onOpenCategories: () -> Unit,
     onOpenImport: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenHelp: () -> Unit,
 ) {
     val sections = listOf(
         R.string.more_section_planning to listOf(
@@ -79,6 +81,9 @@ fun MoreScreen(
         R.string.more_section_data to listOf(
             MoreItem(R.string.import_title, R.string.more_import_hint, Icons.Outlined.FileUpload, onOpenImport),
             MoreItem(R.string.settings_title, R.string.more_settings_hint, Icons.Outlined.Settings, onOpenSettings),
+        ),
+        R.string.more_section_help to listOf(
+            MoreItem(R.string.help_title, R.string.more_help_hint, Icons.AutoMirrored.Outlined.HelpOutline, onOpenHelp),
         ),
     )
     Scaffold(

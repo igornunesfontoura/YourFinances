@@ -16,6 +16,11 @@ interface Settings {
 
     fun setLockEnabled(enabled: Boolean)
 
+    /** False until the welcome tour is finished or skipped once. */
+    val welcomeSeen: StateFlow<Boolean>
+
+    fun setWelcomeSeen()
+
     /** The CSV column mapping last used for files with this [header], to skip mapping it again. */
     fun csvMapping(header: List<String>): CsvMapping?
 
@@ -29,6 +34,14 @@ class SharedPreferencesSettings(private val preferences: SharedPreferences) : Se
     override fun setLockEnabled(enabled: Boolean) {
         preferences.edit().putBoolean(LOCK_ENABLED, enabled).apply()
         _lockEnabled.value = enabled
+    }
+
+    private val _welcomeSeen = MutableStateFlow(preferences.getBoolean(WELCOME_SEEN, false))
+    override val welcomeSeen: StateFlow<Boolean> = _welcomeSeen.asStateFlow()
+
+    override fun setWelcomeSeen() {
+        preferences.edit().putBoolean(WELCOME_SEEN, true).apply()
+        _welcomeSeen.value = true
     }
 
     override fun csvMapping(header: List<String>): CsvMapping? {
@@ -52,6 +65,7 @@ class SharedPreferencesSettings(private val preferences: SharedPreferences) : Se
 
     private companion object {
         const val LOCK_ENABLED = "lock_enabled"
+        const val WELCOME_SEEN = "welcome_seen"
         const val CSV_MAPPING = "csv_mapping_"
     }
 }

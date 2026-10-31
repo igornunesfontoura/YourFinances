@@ -18,6 +18,7 @@ import io.github.igornunesfontoura.yourfinances.data.security.DatabaseRecovery
 import io.github.igornunesfontoura.yourfinances.data.security.KeyStatus
 import io.github.igornunesfontoura.yourfinances.data.settings.Settings
 import io.github.igornunesfontoura.yourfinances.ui.components.SelectedMonth
+import io.github.igornunesfontoura.yourfinances.ui.help.WelcomeScreen
 import io.github.igornunesfontoura.yourfinances.ui.lock.AppLock
 import io.github.igornunesfontoura.yourfinances.ui.lock.AuthRequest
 import io.github.igornunesfontoura.yourfinances.ui.lock.DeviceAuthenticator
@@ -75,6 +76,7 @@ class MainActivity : FragmentActivity() {
     @Composable
     private fun AppContent() {
         val locked by appLock.locked.collectAsStateWithLifecycle()
+        val welcomeSeen by settings.welcomeSeen.collectAsStateWithLifecycle()
         var keyStatus by remember { mutableStateOf<KeyStatus?>(null) }
         LaunchedEffect(Unit) { keyStatus = withContext(Dispatchers.IO) { recovery.keyStatus() } }
         // The app leaves composition while locked, so no dialog or popup window can stay on top
@@ -93,11 +95,16 @@ class MainActivity : FragmentActivity() {
         stateHolder.SaveableStateProvider("app") {
             when (keyStatus) {
                 null -> {}
-                KeyStatus.AVAILABLE -> AppNavHost(
-                    onDisableLock = {
-                        authenticator.authenticate(AuthRequest.DISABLE_LOCK, getString(R.string.lock_disable_prompt_title))
-                    },
-                )
+                // First run: the tour shows once, before the app; skipping it counts as seen.
+                KeyStatus.AVAILABLE -> if (!welcomeSeen) {
+                    WelcomeScreen(onFinish = settings::setWelcomeSeen)
+                } else {
+                    AppNavHost(
+                        onDisableLock = {
+                            authenticator.authenticate(AuthRequest.DISABLE_LOCK, getString(R.string.lock_disable_prompt_title))
+                        },
+                    )
+                }
                 else -> RecoveryRoute(onRecovered = { keyStatus = KeyStatus.AVAILABLE })
             }
         }

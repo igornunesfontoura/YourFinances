@@ -347,4 +347,75 @@
     <string name="action_back">Voltar</string>
     <string name="action_cancel">Cancelar</string>
     <string name="action_ok">OK</string>
+
+    <!-- Welcome tour and help -->
+    <string name="welcome_skip">Pular</string>
+    <string name="welcome_next">Próximo</string>
+    <string name="welcome_start">Começar</string>
+    <string name="welcome_page_indicator">Página %1$d de %2$d</string>
+    <string name="welcome_1_title">Bem-vindo ao Your Finances</string>
+    <string name="welcome_1_body">Controle entradas, contas e gastos do mês. Tudo fica só neste aparelho: sem conta, sem nuvem e sem internet.</string>
+    <string name="welcome_2_title">Quanto ainda posso gastar?</string>
+    <string name="welcome_2_body">O número em destaque na tela inicial já desconta as contas fixas, a meta de guardar e o que você gastou no mês. Se o card ficar vermelho, o mês estourou.</string>
+    <string name="welcome_3_title">Lance em segundos</string>
+    <string name="welcome_3_body">Toque no +, digite o valor e escolha o tipo: entrada, fixa, flexível, aporte ou resgate. Data, cartão e categoria são opcionais.</string>
+    <string name="welcome_4_title">Quatro abas</string>
+    <string name="welcome_4_body">Início mostra o resumo do mês. Lançamentos lista tudo, dia a dia. Guardado mostra suas caixinhas. Mais reúne cartões, recorrências, parcelas, relatórios e configurações.</string>
+    <string name="welcome_5_title">Planeje uma vez</string>
+    <string name="welcome_5_body">Cadastre salário e contas como recorrências, e compras como parceladas: o app prevê os próximos meses. Quando acontecer, confirme com um toque. Dúvidas? Veja Mais › Como usar.</string>
+    <string name="more_section_help">Ajuda</string>
+    <string name="help_title">Como usar</string>
+    <string name="more_help_hint">Guias rápidos sobre cada parte do app</string>
+    <string name="help_replay">Ver as boas-vindas de novo</string>
+    <string name="help_replay_hint">As telas de apresentação da primeira abertura</string>
+    <string name="help_topics">Guias</string>
+    <string name="help_expand">Mostrar guia</string>
+    <string name="help_collapse">Esconder guia</string>
+    <string name="help_available_title">O número principal</string>
+    <string name="help_available_body">“Você ainda pode gastar” é: entradas do mês, mais resgates confirmados, menos saídas fixas (previstas e confirmadas), menos o maior valor entre a meta de guardar e o que você já aportou, menos as saídas flexíveis.
+
+A barra mostra quanto do dinheiro do mês já está comprometido. Toque em “Guardar no mês” para definir a meta e use as setas no topo para ver outros meses.</string>
+    <string name="help_entry_title">Lançar entradas e gastos</string>
+    <string name="help_entry_body">Toque no + no Início ou em Lançamentos, digite o valor, escolha o tipo e toque em Salvar (ou no OK do teclado).
+
+• Entrada: salário, renda extra.
+• Fixa: contas e assinaturas que pesam todo mês.
+• Flexível: gastos do dia a dia, como mercado, jantar e lazer.
+• Aporte: dinheiro que você guardou.
+• Resgate: dinheiro que voltou do guardado.
+
+Para editar ou excluir, toque no lançamento na lista.</string>
+    <string name="help_basis_title">Competência ou caixa</string>
+    <string name="help_basis_body">Na aba Lançamentos você escolhe como agrupar o mês.
+
+• Competência: pela data da compra. Uma compra no cartão conta no mês em que foi feita. É assim que a tela inicial e os relatórios calculam.
+• Caixa: pela data em que o dinheiro sai ou entra. Compras no cartão aparecem no mês de vencimento da fatura.</string>
+    <string name="help_recurrence_title">Contas que se repetem</string>
+    <string name="help_recurrence_body">Em Mais › Recorrências, cadastre salário, aluguel, assinaturas e outras contas mensais ou anuais. O app cria os próximos lançamentos como previstos.
+
+Quando a conta acontecer, toque no ✓ ao lado dela na aba Lançamentos para confirmar. Se o valor mudou, abra o lançamento e ajuste; ligue “Aplicar às próximas” para mudar também os meses seguintes.</string>
+    <string name="help_installment_title">Compras parceladas</string>
+    <string name="help_installment_body">Em Mais › Parcelamentos, toque no + e informe o valor total e o número de parcelas. O app divide o valor (os centavos que sobram vão na primeira parcela) e cria uma parcela por mês.
+
+A lista mostra quanto falta pagar, quando cada compra termina e quanto dos próximos meses já está comprometido.</string>
+    <string name="help_card_title">Cartão de crédito</string>
+    <string name="help_card_body">Em Mais › Cartões, cadastre o cartão com o dia de fechamento e o de vencimento. Ao lançar uma saída, escolha o cartão em Pagamento: compras feitas depois do fechamento entram na fatura seguinte.
+
+Toque no cartão para ver as faturas, abrir os lançamentos de cada uma e marcar a fatura como paga.</string>
+    <string name="help_savings_title">Dinheiro guardado</string>
+    <string name="help_savings_body">Defina a meta de guardar tocando em “Guardar no mês” no Início. Ela é reservada antes mesmo do aporte e vale para os meses seguintes até ser trocada.
+
+Na aba Guardado, crie caixinhas (como reserva de emergência ou viagem), com um objetivo opcional. Registre aportes e resgates como lançamentos e escolha a caixinha. O app não calcula rendimentos: confira o saldo real no seu banco.</string>
+    <string name="help_reports_title">Categorias e relatórios</string>
+    <string name="help_reports_body">Em Mais › Categorias, edite a lista e defina limites mensais para as saídas. O limite é só uma referência e não muda o valor disponível.
+
+Em Mais › Relatórios, veja os gastos por categoria e a evolução dos últimos 12 meses. Assinaturas e contas mostra quanto as saídas fixas recorrentes custam por mês.</string>
+    <string name="help_import_title">Importar extrato</string>
+    <string name="help_import_body">Em Mais › Importar extrato, escolha um arquivo OFX ou CSV exportado pelo seu banco. Revise tipo, categoria e o que entra antes de salvar. Linhas já importadas, ou iguais a lançamentos digitados, começam desmarcadas.
+
+O arquivo é lido só neste aparelho.</string>
+    <string name="help_backup_title">Backup e privacidade</string>
+    <string name="help_backup_body">Seus dados ficam criptografados neste aparelho e não vão para nenhuma nuvem. Por isso, faça backups: em Mais › Configurações, “Fazer backup criptografado” salva tudo num arquivo protegido por uma senha sua. Guarde o arquivo e a senha em lugar seguro: sem a senha não há como recuperar.
+
+Nas Configurações você também exporta os lançamentos em CSV, para abrir numa planilha, e liga ou desliga o bloqueio por biometria.</string>
 </resources>
