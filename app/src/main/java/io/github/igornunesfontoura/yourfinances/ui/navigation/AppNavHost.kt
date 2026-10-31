@@ -1,6 +1,21 @@
 package io.github.igornunesfontoura.yourfinances.ui.navigation
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
@@ -21,6 +36,12 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -128,6 +149,30 @@ private enum class Tab(val route: String, @StringRes val label: Int, val icon: I
     MORE_TAB(MORE, R.string.tab_more, Icons.Outlined.GridView, Icons.Filled.GridView),
 }
 
+// Material motion: tabs "fade through" (the old one leaves fast, the new one grows in), inner
+// screens slide a little along the x axis. Short enough that the next tap is not held up.
+private const val PUSH_MILLIS = 250
+private const val FADE_OUT_MILLIS = 90
+private const val FADE_IN_MILLIS = 210
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.betweenTabs(): Boolean =
+    Tab.entries.any { it.route == initialState.destination.route } && Tab.entries.any { it.route == targetState.destination.route }
+
+private fun fadeThroughIn(): EnterTransition =
+    fadeIn(tween(FADE_IN_MILLIS, delayMillis = FADE_OUT_MILLIS, easing = LinearOutSlowInEasing)) +
+        scaleIn(tween(FADE_IN_MILLIS, delayMillis = FADE_OUT_MILLIS, easing = LinearOutSlowInEasing), initialScale = 0.96f)
+
+private fun fadeThroughOut(): ExitTransition = fadeOut(tween(FADE_OUT_MILLIS, easing = FastOutLinearInEasing))
+
+/** Opening slides in from the right; going back, from the left. */
+private fun pushIn(forward: Boolean): EnterTransition =
+    slideInHorizontally(tween(PUSH_MILLIS, easing = FastOutSlowInEasing)) { width -> (if (forward) width else -width) / 10 } +
+        fadeIn(tween(PUSH_MILLIS, easing = LinearOutSlowInEasing))
+
+private fun pushOut(forward: Boolean): ExitTransition =
+    slideOutHorizontally(tween(PUSH_MILLIS, easing = FastOutSlowInEasing)) { width -> (if (forward) -width else width) / 10 } +
+        fadeOut(tween(FADE_OUT_MILLIS * 2, easing = FastOutLinearInEasing))
+
 /** Each tab keeps its own back stack and scroll position while another tab is open. */
 private fun NavController.openTab(tab: Tab) = navigate(tab.route) {
     popUpTo(graph.findStartDestination().id) { saveState = true }
@@ -144,10 +189,21 @@ fun AppNavHost(onDisableLock: () -> Unit) {
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     val currentTab = Tab.entries.firstOrNull { it.route == currentRoute }
+    // While the bar folds away on the way into an inner screen it keeps showing the tab it left.
+    var lastTab by rememberSaveable { mutableStateOf(Tab.HOME_TAB) }
+    LaunchedEffect(currentTab) { currentTab?.let { lastTab = it } }
     // Insets stay with the inner screens; only the bar's height is taken off them.
     Scaffold(
         contentWindowInsets = WindowInsets(0),
-        bottomBar = { if (currentTab != null) BottomBar(currentTab) { navController.openTab(it) } },
+        bottomBar = {
+            AnimatedVisibility(
+                visible = currentTab != null,
+                enter = expandVertically(tween(PUSH_MILLIS), expandFrom = Alignment.Top) + fadeIn(tween(PUSH_MILLIS)),
+                exit = shrinkVertically(tween(PUSH_MILLIS), shrinkTowards = Alignment.Top) + fadeOut(tween(PUSH_MILLIS)),
+            ) {
+                BottomBar(currentTab ?: lastTab) { navController.openTab(it) }
+            }
+        },
     ) { padding ->
         AppNavGraph(navController, onDisableLock, Modifier.padding(padding).consumeWindowInsets(padding))
     }
@@ -175,7 +231,15 @@ private fun BottomBar(current: Tab, onSelect: (Tab) -> Unit) {
 
 @Composable
 private fun AppNavGraph(navController: NavHostController, onDisableLock: () -> Unit, modifier: Modifier) {
-    NavHost(navController = navController, startDestination = HOME, modifier = modifier) {
+    NavHost(
+        navController = navController,
+        startDestination = HOME,
+        modifier = modifier,
+        enterTransition = { if (betweenTabs()) fadeThroughIn() else pushIn(forward = true) },
+        exitTransition = { if (betweenTabs()) fadeThroughOut() else pushOut(forward = true) },
+        popEnterTransition = { if (betweenTabs()) fadeThroughIn() else pushIn(forward = false) },
+        popExitTransition = { if (betweenTabs()) fadeThroughOut() else pushOut(forward = false) },
+    ) {
         composable(HOME) { entry ->
             HomeRoute(
                 onAddEntry = { navController.navigateFrom(entry, entryRoute()) },
