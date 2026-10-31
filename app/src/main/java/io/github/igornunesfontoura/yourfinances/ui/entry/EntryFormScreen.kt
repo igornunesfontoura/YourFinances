@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -32,17 +31,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.igornunesfontoura.yourfinances.R
 import io.github.igornunesfontoura.yourfinances.domain.model.EntryType
-import io.github.igornunesfontoura.yourfinances.ui.components.AmountField
 import io.github.igornunesfontoura.yourfinances.ui.components.ChoiceChips
 import io.github.igornunesfontoura.yourfinances.ui.components.ConfirmDialog
 import io.github.igornunesfontoura.yourfinances.ui.components.DateChip
+import io.github.igornunesfontoura.yourfinances.ui.components.EntryTypeSelector
 import io.github.igornunesfontoura.yourfinances.ui.components.ErrorText
+import io.github.igornunesfontoura.yourfinances.ui.components.FormCard
 import io.github.igornunesfontoura.yourfinances.ui.components.FormScaffold
+import io.github.igornunesfontoura.yourfinances.ui.components.FormSection
+import io.github.igornunesfontoura.yourfinances.ui.components.HeroAmountField
 import io.github.igornunesfontoura.yourfinances.ui.components.HintText
 import io.github.igornunesfontoura.yourfinances.ui.components.PaymentSelector
-import io.github.igornunesfontoura.yourfinances.ui.components.SegmentedSelector
+import io.github.igornunesfontoura.yourfinances.ui.components.PrimaryButton
+import io.github.igornunesfontoura.yourfinances.ui.components.tint
 import io.github.igornunesfontoura.yourfinances.ui.format.formatShortDate
-import io.github.igornunesfontoura.yourfinances.ui.format.label
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import java.time.LocalDate
@@ -113,80 +115,87 @@ fun EntryFormScreen(
 
         if (!state.canEditValues) HintText(R.string.entry_locked_hint)
 
-        AmountField(
+        HeroAmountField(
             digits = state.amountDigits,
             onDigitsChange = onAmountChange,
             label = R.string.entry_amount,
+            color = state.type.tint,
             enabled = valuesEnabled,
             onDone = onSave,
             modifier = Modifier.focusRequester(amountFocus),
         )
 
-        SegmentedSelector(EntryType.entries, state.type, { it.label }, onTypeChange, enabled = valuesEnabled)
+        EntryTypeSelector(state.type, onTypeChange, enabled = valuesEnabled)
 
-        DateChip(
-            date = state.occurredOn,
-            today = state.today,
-            label = R.string.entry_date,
-            enabled = valuesEnabled,
-            onDateChange = onDateChange,
-        )
-
-        if (state.showsPayment) {
-            PaymentSelector(state.cards, state.cardId, onCardChange, enabled = valuesEnabled)
-            state.cardDueDate?.let { HintText(stringResource(R.string.payment_card_due, formatShortDate(it))) }
-        }
-
-        if (state.showsCategory) {
-            ChoiceChips(
-                noneLabel = R.string.category_none,
-                options = state.typeCategories.map { it.id to it.name },
-                selectedId = state.categoryId,
-                onSelect = onCategoryChange,
+        FormCard {
+            DateChip(
+                date = state.occurredOn,
+                today = state.today,
+                label = R.string.entry_date,
                 enabled = valuesEnabled,
+                onDateChange = onDateChange,
             )
-        }
 
-        if (state.showsPocket) {
-            ChoiceChips(
-                noneLabel = R.string.pocket_none,
-                options = state.pockets.map { it.id to it.name },
-                selectedId = state.pocketId,
-                onSelect = onPocketChange,
-                enabled = valuesEnabled,
-            )
-        }
-
-        OutlinedTextField(
-            value = state.description,
-            onValueChange = onDescriptionChange,
-            label = { Text(stringResource(R.string.entry_description)) },
-            singleLine = true,
-            enabled = !state.isBusy,
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { onSave() }),
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        if (state.canApplyToUpcoming) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.entry_apply_to_upcoming))
-                    HintText(R.string.entry_apply_to_upcoming_hint)
+            if (state.showsPayment) {
+                FormSection(R.string.entry_payment) {
+                    PaymentSelector(state.cards, state.cardId, onCardChange, enabled = valuesEnabled)
+                    state.cardDueDate?.let { HintText(stringResource(R.string.payment_card_due, formatShortDate(it))) }
                 }
-                Switch(
-                    checked = state.applyToUpcoming,
-                    onCheckedChange = onApplyToUpcomingChange,
-                    enabled = !state.isBusy,
-                )
+            }
+
+            if (state.showsCategory) {
+                FormSection(R.string.entry_category) {
+                    ChoiceChips(
+                        noneLabel = R.string.category_none,
+                        options = state.typeCategories.map { it.id to it.name },
+                        selectedId = state.categoryId,
+                        onSelect = onCategoryChange,
+                        enabled = valuesEnabled,
+                    )
+                }
+            }
+
+            if (state.showsPocket) {
+                FormSection(R.string.entry_pocket) {
+                    ChoiceChips(
+                        noneLabel = R.string.pocket_none,
+                        options = state.pockets.map { it.id to it.name },
+                        selectedId = state.pocketId,
+                        onSelect = onPocketChange,
+                        enabled = valuesEnabled,
+                    )
+                }
+            }
+
+            OutlinedTextField(
+                value = state.description,
+                onValueChange = onDescriptionChange,
+                label = { Text(stringResource(R.string.entry_description)) },
+                singleLine = true,
+                enabled = !state.isBusy,
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { onSave() }),
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            if (state.canApplyToUpcoming) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.entry_apply_to_upcoming))
+                        HintText(R.string.entry_apply_to_upcoming_hint)
+                    }
+                    Switch(
+                        checked = state.applyToUpcoming,
+                        onCheckedChange = onApplyToUpcomingChange,
+                        enabled = !state.isBusy,
+                    )
+                }
             }
         }
 
         if (state.status.failed) ErrorText(R.string.save_failed)
 
-        Button(onClick = onSave, enabled = state.canSave, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.entry_save))
-        }
+        PrimaryButton(stringResource(R.string.entry_save), onClick = onSave, enabled = state.canSave)
     }
 
     if (confirmDelete) {

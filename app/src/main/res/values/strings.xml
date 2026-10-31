@@ -82,6 +82,10 @@
     <string name="entry_date">Data</string>
     <string name="entry_today">Hoje</string>
     <string name="entry_save">Salvar</string>
+    <string name="entry_type">Tipo</string>
+    <string name="entry_payment">Pagamento</string>
+    <string name="entry_category">Categoria</string>
+    <string name="entry_pocket">Caixinha</string>
     <string name="save_failed">Não foi possível salvar. Tente novamente.</string>
     <string name="entry_locked_hint">Parcela de compra parcelada: aqui só a descrição pode ser alterada. Excluir uma parcela exclui a compra inteira.</string>
     <string name="entry_delete">Excluir</string>

@@ -70,7 +70,8 @@ fun EntryRow(entry: Entry, cardName: String?, onClick: () -> Unit, onConfirm: ((
     val predicted = entry.status == EntryStatus.PREDICTED
     val title = entry.description.ifBlank { stringResource(entry.type.label) }
     val details = buildList {
-        add(stringResource(entry.type.label))
+        // Without a description the type is already the title.
+        if (entry.description.isNotBlank()) add(stringResource(entry.type.label))
         if (entry.installmentNumber != null && entry.installmentCount != null) {
             add(stringResource(R.string.entry_installment, entry.installmentNumber, entry.installmentCount))
         }
