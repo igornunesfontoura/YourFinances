@@ -7,6 +7,11 @@ plugins {
     alias(libs.plugins.android.junit5)
 }
 
+// Release signing comes from outside the repository (~/.gradle/gradle.properties or environment
+// variables). Without all four values the release APK stays unsigned, as F-Droid builds expect.
+val releaseSigning = listOf("YF_RELEASE_STORE_FILE", "YF_RELEASE_STORE_PASSWORD", "YF_RELEASE_KEY_ALIAS", "YF_RELEASE_KEY_PASSWORD")
+    .associateWith { providers.gradleProperty(it).orElse(providers.environmentVariable(it)).orNull }
+
 android {
     namespace = "io.github.igornunesfontoura.yourfinances"
     compileSdk = 35
@@ -15,14 +20,26 @@ android {
         applicationId = "io.github.igornunesfontoura.yourfinances"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (releaseSigning.values.all { it != null }) {
+            create("release") {
+                storeFile = file(releaseSigning.getValue("YF_RELEASE_STORE_FILE")!!)
+                storePassword = releaseSigning.getValue("YF_RELEASE_STORE_PASSWORD")
+                keyAlias = releaseSigning.getValue("YF_RELEASE_KEY_ALIAS")
+                keyPassword = releaseSigning.getValue("YF_RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
