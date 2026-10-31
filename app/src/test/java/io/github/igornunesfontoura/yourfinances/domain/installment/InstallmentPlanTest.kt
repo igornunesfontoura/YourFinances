@@ -52,4 +52,11 @@ class InstallmentPlanTest {
     fun `purchase without installments has no end date`() {
         assertNull(InstallmentPlan(purchase, emptyList()).progress(LocalDate.of(2026, 3, 1)).endsOn)
     }
+
+    @Test
+    fun `paid share counts installments paid so far`() {
+        assertEquals(0f, purchase.progress(installments, LocalDate.of(2026, 1, 1)).paidShare)
+        assertEquals(1f / 3, purchase.progress(installments, installments[0].paidOn).paidShare)
+        assertEquals(1f, purchase.progress(installments, LocalDate.of(2027, 1, 1)).paidShare)
+    }
 }

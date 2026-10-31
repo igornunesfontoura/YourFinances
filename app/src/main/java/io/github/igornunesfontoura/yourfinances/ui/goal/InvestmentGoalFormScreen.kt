@@ -1,8 +1,5 @@
 package io.github.igornunesfontoura.yourfinances.ui.goal
 
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,6 +16,7 @@ import io.github.igornunesfontoura.yourfinances.ui.components.AmountField
 import io.github.igornunesfontoura.yourfinances.ui.components.ErrorText
 import io.github.igornunesfontoura.yourfinances.ui.components.FormScaffold
 import io.github.igornunesfontoura.yourfinances.ui.components.HintText
+import io.github.igornunesfontoura.yourfinances.ui.components.PrimaryButton
 import io.github.igornunesfontoura.yourfinances.ui.format.formatMonthInSentence
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -64,8 +62,6 @@ fun InvestmentGoalFormRoute(
             },
         )
         if (state.status.failed) ErrorText(R.string.save_failed)
-        Button(onClick = viewModel::save, enabled = state.canSave, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.entry_save))
-        }
+        PrimaryButton(stringResource(R.string.entry_save), onClick = viewModel::save, enabled = state.canSave)
     }
 }

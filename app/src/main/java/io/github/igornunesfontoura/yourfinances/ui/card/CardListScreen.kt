@@ -1,26 +1,15 @@
 package io.github.igornunesfontoura.yourfinances.ui.card
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
+import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -30,6 +19,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.igornunesfontoura.yourfinances.R
 import io.github.igornunesfontoura.yourfinances.domain.card.InvoiceStatus
+import io.github.igornunesfontoura.yourfinances.ui.components.AppCard
+import io.github.igornunesfontoura.yourfinances.ui.components.DetailText
+import io.github.igornunesfontoura.yourfinances.ui.components.EmptyState
+import io.github.igornunesfontoura.yourfinances.ui.components.IconBadge
+import io.github.igornunesfontoura.yourfinances.ui.components.ListScaffold
 import io.github.igornunesfontoura.yourfinances.ui.format.formatCents
 import io.github.igornunesfontoura.yourfinances.ui.format.formatShortDate
 import org.koin.androidx.compose.koinViewModel
@@ -40,64 +34,45 @@ fun CardListRoute(onBack: () -> Unit, onAdd: () -> Unit, onOpen: (Long) -> Unit,
     CardListScreen(state, onBack, onAdd, onOpen)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CardListScreen(state: CardListUiState, onBack: () -> Unit, onAdd: () -> Unit, onOpen: (Long) -> Unit) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.cards_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back))
-                    }
-                },
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onAdd) { Icon(Icons.Filled.Add, stringResource(R.string.card_add)) }
-        },
-    ) { padding ->
-        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(bottom = 88.dp)) {
-            if (!state.loading && state.cards.isEmpty()) {
-                item {
-                    Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                        Text(stringResource(R.string.cards_empty), style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
-            }
-            items(state.cards, key = { it.card.id }) { overview -> CardRow(overview) { onOpen(overview.card.id) } }
+    ListScaffold(title = R.string.cards_title, onBack = onBack, addLabel = R.string.card_add, onAdd = onAdd) {
+        if (!state.loading && state.cards.isEmpty()) {
+            item { EmptyState(Icons.Outlined.CreditCard, R.string.cards_empty) }
         }
+        items(state.cards, key = { it.card.id }) { overview -> CardTile(overview) { onOpen(overview.card.id) } }
     }
 }
 
+/** The card's current invoice in large, and the invoice still to pay, if any. */
 @Composable
-private fun CardRow(overview: CardOverview, onClick: () -> Unit) {
+private fun CardTile(overview: CardOverview, onClick: () -> Unit) {
     val card = overview.card
-    ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
-        headlineContent = { Text(card.name) },
-        supportingContent = {
-            Column {
-                Text(stringResource(R.string.card_days, card.closingDay, card.dueDay))
-                Text(
-                    stringResource(
-                        R.string.card_current_invoice,
-                        formatCents(overview.current.totalCents),
-                        formatShortDate(overview.current.dueDate),
-                    ),
-                )
-                overview.toPay?.let { invoice ->
-                    Text(
-                        text = stringResource(
-                            if (invoice.status == InvoiceStatus.OVERDUE) R.string.card_overdue_invoice else R.string.card_closed_invoice,
-                            formatCents(invoice.totalCents),
-                            formatShortDate(invoice.dueDate),
-                        ),
-                        color = if (invoice.status == InvoiceStatus.OVERDUE) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+    AppCard(Modifier.fillMaxWidth(), onClick = onClick) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                IconBadge(Icons.Outlined.CreditCard, MaterialTheme.colorScheme.primary)
+                Column {
+                    Text(card.name, style = MaterialTheme.typography.titleMedium)
+                    DetailText(stringResource(R.string.card_days, card.closingDay, card.dueDay))
                 }
             }
-        },
-    )
+            Text(
+                stringResource(R.string.card_current_invoice, formatCents(overview.current.totalCents), formatShortDate(overview.current.dueDate)),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            overview.toPay?.let { invoice ->
+                val overdue = invoice.status == InvoiceStatus.OVERDUE
+                Text(
+                    text = stringResource(
+                        if (overdue) R.string.card_overdue_invoice else R.string.card_closed_invoice,
+                        formatCents(invoice.totalCents),
+                        formatShortDate(invoice.dueDate),
+                    ),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (overdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+    }
 }

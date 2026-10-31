@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import io.github.igornunesfontoura.yourfinances.R
 import io.github.igornunesfontoura.yourfinances.ui.format.formatMonth
 import java.time.YearMonth
@@ -23,7 +24,7 @@ fun MonthSwitcher(month: YearMonth, onPrevious: () -> Unit, onNext: () -> Unit, 
         IconButton(onClick = onPrevious) {
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, stringResource(R.string.month_previous))
         }
-        Text(formatMonth(month), style = MaterialTheme.typography.titleMedium)
+        Text(formatMonth(month), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
         IconButton(onClick = onNext) {
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, stringResource(R.string.month_next))
         }

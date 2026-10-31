@@ -1,28 +1,15 @@
 package io.github.igornunesfontoura.yourfinances.ui.category
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,23 +20,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.igornunesfontoura.yourfinances.R
 import io.github.igornunesfontoura.yourfinances.domain.model.Category
 import io.github.igornunesfontoura.yourfinances.domain.model.CategoryKind
 import io.github.igornunesfontoura.yourfinances.ui.components.AmountField
+import io.github.igornunesfontoura.yourfinances.ui.components.CardListItem
 import io.github.igornunesfontoura.yourfinances.ui.components.ConfirmDialog
 import io.github.igornunesfontoura.yourfinances.ui.components.ErrorText
 import io.github.igornunesfontoura.yourfinances.ui.components.FormScaffold
 import io.github.igornunesfontoura.yourfinances.ui.components.HintText
+import io.github.igornunesfontoura.yourfinances.ui.components.IconBadge
+import io.github.igornunesfontoura.yourfinances.ui.components.ListScaffold
+import io.github.igornunesfontoura.yourfinances.ui.components.PrimaryButton
 import io.github.igornunesfontoura.yourfinances.ui.components.SegmentedSelector
+import io.github.igornunesfontoura.yourfinances.ui.components.cardGroup
 import io.github.igornunesfontoura.yourfinances.ui.format.formatCents
 import io.github.igornunesfontoura.yourfinances.ui.format.label
+import io.github.igornunesfontoura.yourfinances.ui.theme.finance
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryListRoute(
     onBack: () -> Unit,
@@ -58,45 +49,21 @@ fun CategoryListRoute(
     viewModel: CategoryListViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.categories_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back))
-                    }
-                },
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onAdd) { Icon(Icons.Filled.Add, stringResource(R.string.category_add)) }
-        },
-    ) { padding ->
-        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(bottom = 88.dp)) {
-            listOf(R.string.category_kind_expense to state.expense, R.string.category_kind_income to state.income)
-                .forEach { (title, categories) ->
-                    item(key = "title-$title") {
-                        Text(
-                            stringResource(title),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 4.dp),
-                        )
-                    }
-                    items(categories, key = { it.id }) { CategoryRow(it, onClick = { onOpen(it.id) }) }
-                }
-        }
+    ListScaffold(title = R.string.categories_title, onBack = onBack, addLabel = R.string.category_add, onAdd = onAdd) {
+        cardGroup("expense", state.expense, header = R.string.category_kind_expense) { CategoryRow(it, onClick = { onOpen(it.id) }) }
+        cardGroup("income", state.income, header = R.string.category_kind_income) { CategoryRow(it, onClick = { onOpen(it.id) }) }
     }
 }
 
 @Composable
 private fun CategoryRow(category: Category, onClick: () -> Unit) {
     val limit = category.monthlyLimitCents
-    ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
-        headlineContent = { Text(category.name) },
-        supportingContent = limit?.let { { Text(stringResource(R.string.category_limit_of, formatCents(it))) } },
+    val tint = if (category.kind == CategoryKind.INCOME) MaterialTheme.finance.income else MaterialTheme.finance.expense
+    CardListItem(
+        headline = category.name,
+        supporting = limit?.let { { Text(stringResource(R.string.category_limit_of, formatCents(it))) } },
+        leading = { IconBadge(Icons.Outlined.Category, tint) },
+        onClick = onClick,
     )
 }
 
@@ -140,9 +107,7 @@ fun CategoryFormRoute(
             HintText(R.string.category_limit_hint)
         }
         if (state.status.failed) ErrorText(R.string.save_failed)
-        Button(onClick = viewModel::save, enabled = state.canSave, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.entry_save))
-        }
+        PrimaryButton(stringResource(R.string.entry_save), onClick = viewModel::save, enabled = state.canSave)
     }
 
     if (confirmDelete) {

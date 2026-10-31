@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -26,6 +25,7 @@ import io.github.igornunesfontoura.yourfinances.ui.components.ConfirmDialog
 import io.github.igornunesfontoura.yourfinances.ui.components.ErrorText
 import io.github.igornunesfontoura.yourfinances.ui.components.FormScaffold
 import io.github.igornunesfontoura.yourfinances.ui.components.HintText
+import io.github.igornunesfontoura.yourfinances.ui.components.PrimaryButton
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -74,9 +74,7 @@ fun PocketFormRoute(
         } else if (state.status.failed) {
             ErrorText(R.string.save_failed)
         }
-        Button(onClick = viewModel::save, enabled = state.canSave, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.entry_save))
-        }
+        PrimaryButton(stringResource(R.string.entry_save), onClick = viewModel::save, enabled = state.canSave)
     }
 
     if (confirmDelete) {

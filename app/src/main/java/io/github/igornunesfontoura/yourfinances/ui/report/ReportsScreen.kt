@@ -11,20 +11,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -33,6 +31,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -41,6 +40,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.igornunesfontoura.yourfinances.R
 import io.github.igornunesfontoura.yourfinances.domain.budget.CategorySpending
 import io.github.igornunesfontoura.yourfinances.domain.report.MonthEvolution
+import io.github.igornunesfontoura.yourfinances.ui.components.AppCard
+import io.github.igornunesfontoura.yourfinances.ui.components.CardListItem
+import io.github.igornunesfontoura.yourfinances.ui.components.DetailText
+import io.github.igornunesfontoura.yourfinances.ui.components.EmptyState
+import io.github.igornunesfontoura.yourfinances.ui.components.MonthSwitcher
+import io.github.igornunesfontoura.yourfinances.ui.components.SectionHeader
+import io.github.igornunesfontoura.yourfinances.ui.components.cardGroup
 import io.github.igornunesfontoura.yourfinances.ui.format.formatCents
 import io.github.igornunesfontoura.yourfinances.ui.format.formatMonth
 import io.github.igornunesfontoura.yourfinances.ui.format.formatShortMonth
@@ -54,59 +60,44 @@ fun ReportsRoute(onBack: () -> Unit, viewModel: ReportsViewModel = koinViewModel
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(formatMonth(state.month)) },
+                title = { MonthSwitcher(state.month, viewModel::previousMonth, viewModel::nextMonth) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back))
                     }
                 },
-                actions = {
-                    IconButton(onClick = viewModel::previousMonth) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, stringResource(R.string.month_previous))
-                    }
-                    IconButton(onClick = viewModel::nextMonth) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, stringResource(R.string.month_next))
-                    }
-                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
     ) { padding ->
-        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(bottom = 24.dp)) {
-            item { SectionTitle(stringResource(R.string.reports_by_category)) }
+        LazyColumn(
+            Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
             item {
-                Text(
-                    stringResource(R.string.reports_basis_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
-            }
-            if (state.beyondPredictions) {
-                item {
-                    Text(
-                        stringResource(R.string.reports_beyond_predictions),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.tertiary,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                    )
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    SectionHeader(stringResource(R.string.reports_by_category))
+                    DetailText(stringResource(R.string.reports_basis_hint))
+                    if (state.beyondPredictions) {
+                        DetailText(stringResource(R.string.reports_beyond_predictions), color = MaterialTheme.colorScheme.tertiary)
+                    }
                 }
             }
             if (!state.loading && state.spending.isEmpty()) {
-                item {
-                    Text(
-                        stringResource(R.string.reports_no_expenses),
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(16.dp),
-                    )
+                item { EmptyState(Icons.Outlined.BarChart, R.string.reports_no_expenses) }
+            }
+            cardGroup("spending", state.spending) { CategoryBudgetRow(it) }
+            item {
+                Column {
+                    SectionHeader(stringResource(R.string.reports_evolution))
+                    AppCard(Modifier.fillMaxWidth()) { EvolutionChart(state.evolution) }
                 }
             }
-            items(state.spending, key = { it.category?.id ?: -1L }) { CategoryBudgetRow(it) }
-            item { SectionTitle(stringResource(R.string.reports_evolution)) }
-            item { EvolutionChart(state.evolution) }
-            items(state.evolution.reversed(), key = { "month-${it.month}" }) { month ->
-                ListItem(
-                    headlineContent = { Text(formatMonth(month.month)) },
-                    supportingContent = {
+            cardGroup("months", state.evolution.reversed()) { month ->
+                CardListItem(
+                    headline = formatMonth(month.month),
+                    supporting = {
                         Text(
                             stringResource(
                                 R.string.reports_month_line,
@@ -115,7 +106,13 @@ fun ReportsRoute(onBack: () -> Unit, viewModel: ReportsViewModel = koinViewModel
                             ),
                         )
                     },
-                    trailingContent = { Text(formatCents(month.totals.balanceCents), style = MaterialTheme.typography.bodyLarge) },
+                    trailing = {
+                        Text(
+                            formatCents(month.totals.balanceCents),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = if (month.totals.balanceCents < 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                        )
+                    },
                 )
             }
         }
@@ -126,9 +123,9 @@ fun ReportsRoute(onBack: () -> Unit, viewModel: ReportsViewModel = koinViewModel
 private fun CategoryBudgetRow(spending: CategorySpending) {
     val limit = spending.limitCents
     val overColor = if (spending.overLimit) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-    ListItem(
-        headlineContent = { Text(spending.category?.name ?: stringResource(R.string.category_none)) },
-        supportingContent = if (limit != null) {
+    CardListItem(
+        headline = spending.category?.name ?: stringResource(R.string.category_none),
+        supporting = if (limit != null) {
             {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -142,13 +139,16 @@ private fun CategoryBudgetRow(spending: CategorySpending) {
                         progress = { (spending.usage ?: 0.0).coerceIn(0.0, 1.0).toFloat() },
                         color = if (spending.overLimit) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                         modifier = Modifier.fillMaxWidth(),
+                        strokeCap = StrokeCap.Round,
+                        gapSize = 0.dp,
+                        drawStopIndicator = {},
                     )
                 }
             }
         } else {
             null
         },
-        trailingContent = { Text(formatCents(spending.spentCents), style = MaterialTheme.typography.bodyLarge, color = overColor) },
+        trailing = { Text(formatCents(spending.spentCents), style = MaterialTheme.typography.titleSmall, color = overColor) },
     )
 }
 
@@ -201,14 +201,4 @@ private fun Legend(color: Color, label: String) {
         Canvas(Modifier.size(10.dp)) { drawCircle(color) }
         Text(label, style = MaterialTheme.typography.labelMedium)
     }
-}
-
-@Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 4.dp),
-    )
 }

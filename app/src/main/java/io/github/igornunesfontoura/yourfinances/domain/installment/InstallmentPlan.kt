@@ -18,6 +18,9 @@ data class InstallmentProgress(
     val endsOn: LocalDate?,
 ) {
     val isFinished: Boolean get() = paidCount >= purchase.installmentCount
+
+    /** Share of the installments already paid, from 0 to 1. */
+    val paidShare: Float get() = (paidCount.toFloat() / purchase.installmentCount.coerceAtLeast(1)).coerceIn(0f, 1f)
 }
 
 fun InstallmentPurchase.progress(installments: List<Entry>, today: LocalDate): InstallmentProgress {

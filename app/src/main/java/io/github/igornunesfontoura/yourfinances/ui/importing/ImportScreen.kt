@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -36,6 +37,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -81,6 +83,7 @@ fun ImportRoute(onDone: () -> Unit, viewModel: ImportViewModel = koinViewModel()
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back))
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
         bottomBar = {
@@ -89,8 +92,8 @@ fun ImportRoute(onDone: () -> Unit, viewModel: ImportViewModel = koinViewModel()
                     onClick = viewModel::import,
                     enabled = state.selectedCount > 0,
                     // Edge to edge: keep the button above the system navigation bar.
-                    modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp),
-                ) { Text(stringResource(R.string.import_confirm, state.selectedCount)) }
+                    modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp).height(56.dp),
+                ) { Text(stringResource(R.string.import_confirm, state.selectedCount), style = MaterialTheme.typography.titleMedium) }
             }
         },
     ) { padding ->

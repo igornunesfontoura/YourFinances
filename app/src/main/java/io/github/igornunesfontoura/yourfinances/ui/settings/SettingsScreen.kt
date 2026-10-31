@@ -3,28 +3,20 @@ package io.github.igornunesfontoura.yourfinances.ui.settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.FileUpload
+import androidx.compose.material.icons.outlined.Fingerprint
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,16 +25,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.igornunesfontoura.yourfinances.R
+import io.github.igornunesfontoura.yourfinances.ui.components.AppCard
+import io.github.igornunesfontoura.yourfinances.ui.components.CardListItem
+import io.github.igornunesfontoura.yourfinances.ui.components.IconBadge
+import io.github.igornunesfontoura.yourfinances.ui.components.ListScaffold
 import io.github.igornunesfontoura.yourfinances.ui.components.NewBackupPasswordDialog
 import io.github.igornunesfontoura.yourfinances.ui.components.RestorePasswordDialog
+import io.github.igornunesfontoura.yourfinances.ui.components.SectionHeader
+import io.github.igornunesfontoura.yourfinances.ui.components.cardGroup
 import org.koin.androidx.compose.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsRoute(
     onBack: () -> Unit,
@@ -78,40 +75,43 @@ fun SettingsRoute(
         if (!on && state.deviceSecure) onDisableLock() else viewModel.setLockEnabled(on)
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.settings_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back))
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())) {
-            if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-            SectionTitle(R.string.settings_security)
-            ListItem(
-                modifier = Modifier.clickable { setLock(!state.lockEnabled) },
-                headlineContent = { Text(stringResource(R.string.settings_lock)) },
-                supportingContent = {
-                    Text(
-                        stringResource(if (state.deviceSecure) R.string.settings_lock_hint else R.string.settings_lock_no_device_lock),
+    ListScaffold(title = R.string.settings_title, onBack = onBack, snackbarHost = { SnackbarHost(snackbar) }) {
+        if (state.busy) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
+        item {
+            Column {
+                SectionHeader(stringResource(R.string.settings_security))
+                AppCard(Modifier.fillMaxWidth()) {
+                    CardListItem(
+                        headline = stringResource(R.string.settings_lock),
+                        supporting = {
+                            Text(stringResource(if (state.deviceSecure) R.string.settings_lock_hint else R.string.settings_lock_no_device_lock))
+                        },
+                        leading = { IconBadge(Icons.Outlined.Fingerprint, MaterialTheme.colorScheme.primary) },
+                        trailing = { Switch(checked = state.lockEnabled, onCheckedChange = setLock) },
+                        onClick = { setLock(!state.lockEnabled) },
                     )
-                },
-                trailingContent = { Switch(checked = state.lockEnabled, onCheckedChange = setLock) },
-            )
-            HorizontalDivider()
-            SectionTitle(R.string.settings_data)
-            ActionItem(R.string.settings_backup, R.string.settings_backup_hint, enabled) { askBackupPassword = true }
-            ActionItem(R.string.settings_restore, R.string.settings_restore_hint, enabled) { pickBackup.launch(arrayOf("*/*")) }
-            ActionItem(R.string.settings_import, R.string.settings_import_hint, enabled, onClick = onOpenImport)
-            ActionItem(R.string.settings_export_csv, R.string.settings_export_csv_hint, enabled) {
-                exportCsv.launch(viewModel.csvFileName())
+                }
             }
+        }
+        cardGroup(
+            "data",
+            listOf(
+                SettingsAction(R.string.settings_backup, R.string.settings_backup_hint, Icons.Outlined.Lock) { askBackupPassword = true },
+                SettingsAction(R.string.settings_restore, R.string.settings_restore_hint, Icons.Outlined.Restore) { pickBackup.launch(arrayOf("*/*")) },
+                SettingsAction(R.string.settings_import, R.string.settings_import_hint, Icons.Outlined.FileUpload, onOpenImport),
+                SettingsAction(R.string.settings_export_csv, R.string.settings_export_csv_hint, Icons.Outlined.FileDownload) {
+                    exportCsv.launch(viewModel.csvFileName())
+                },
+            ),
+            header = R.string.settings_data,
+        ) { action ->
+            CardListItem(
+                headline = stringResource(action.title),
+                supporting = { Text(stringResource(action.hint)) },
+                leading = { IconBadge(action.icon, MaterialTheme.colorScheme.primary) },
+                onClick = action.onClick,
+                enabled = enabled,
+            )
         }
     }
 
@@ -136,24 +136,12 @@ fun SettingsRoute(
     }
 }
 
-@Composable
-private fun SectionTitle(@StringRes text: Int) {
-    Text(
-        stringResource(text),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 4.dp),
-    )
-}
-
-@Composable
-private fun ActionItem(@StringRes title: Int, @StringRes hint: Int, enabled: Boolean, onClick: () -> Unit) {
-    ListItem(
-        modifier = Modifier.clickable(enabled = enabled, onClick = onClick),
-        headlineContent = { Text(stringResource(title)) },
-        supportingContent = { Text(stringResource(hint)) },
-    )
-}
+private class SettingsAction(
+    @StringRes val title: Int,
+    @StringRes val hint: Int,
+    val icon: ImageVector,
+    val onClick: () -> Unit,
+)
 
 private val SettingsMessage.text: Int
     get() = when (this) {
